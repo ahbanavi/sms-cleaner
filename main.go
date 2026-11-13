@@ -91,7 +91,11 @@ func main() {
 	if err != nil {
 		lvl = zerolog.InfoLevel
 	}
-	log := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.DateTime}).Level(lvl).With().Timestamp().Logger()
+	setupTimeZone()
+	// Colors only on a terminal; log files (Android) and docker logs stay plain.
+	fi, _ := os.Stderr.Stat()
+	plain := fi == nil || fi.Mode()&os.ModeCharDevice == 0
+	log := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.DateTime, NoColor: plain}).Level(lvl).With().Timestamp().Logger()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 

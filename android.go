@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -52,4 +53,15 @@ func dnsServers(list string) []string {
 		out = append(out, s)
 	}
 	return append(out, "1.1.1.1:53", "8.8.8.8:53")
+}
+
+// setupTimeZone applies $TZ on Android, where Go always starts in UTC
+// because it can't read the system time zone setting.
+func setupTimeZone() {
+	if runtime.GOOS != "android" {
+		return
+	}
+	if loc, err := time.LoadLocation(os.Getenv("TZ")); err == nil && os.Getenv("TZ") != "" {
+		time.Local = loc
+	}
 }

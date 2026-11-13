@@ -39,7 +39,6 @@ class MainActivity : Activity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        edgeToEdge()
 
         web = WebView(this).apply {
             visibility = View.INVISIBLE
@@ -78,6 +77,7 @@ class MainActivity : Activity() {
             insets
         }
         setContentView(root)
+        edgeToEdge() // needs the window's decor view, created by setContentView
 
         if (Build.VERSION.SDK_INT >= 33) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) { back() }
