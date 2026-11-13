@@ -24,9 +24,13 @@ Sample data from demo mode (`SMSC_DEMO=1`): every sender, code and number below 
 ![Offers on the desktop, with one message open: the verdict, the points behind it, and the words that teach the cleaner](docs/screenshots/desktop-offers.png)
 
 <p>
-  <img src="docs/screenshots/phone-offers.png" width="32%" alt="Offers list on the phone, with discount codes highlighted to copy">
-  <img src="docs/screenshots/phone-spam.png" width="32%" alt="A blocked scam message opened, showing why it was judged spam">
-  <img src="docs/screenshots/phone-try.png" width="32%" alt="Try a message: a pasted SMS and the cleaner's verdict">
+  <img src="docs/screenshots/phone-home.png" width="32%" alt="Phone Home: the last clean, a big Clean now button, a message waiting for review and the lists">
+  <img src="docs/screenshots/phone-messages.png" width="32%" alt="Phone Messages: swipeable list tabs, filter chips and Copy buttons for discount codes">
+  <img src="docs/screenshots/phone-message.png" width="32%" alt="A scam message opened full screen: the verdict, why, words to teach with and the label buttons pinned at the bottom">
+</p>
+<p>
+  <img src="docs/screenshots/phone-review.png" width="32%" alt="Needs review on the phone: label buttons right on each card">
+  <img src="docs/screenshots/phone-settings.png" width="32%" alt="Phone Settings: phone connection, cleaning, teaching and app version as a list">
 </p>
 
 ![Activity: every run and each change it made on the phone](docs/screenshots/desktop-activity.png)
