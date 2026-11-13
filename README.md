@@ -25,7 +25,7 @@ Sample data from demo mode (`SMSC_DEMO=1`): every sender, code and number below 
 
 <p>
   <img src="docs/screenshots/phone-offers.png" width="32%" alt="Offers list on the phone, with discount codes highlighted to copy">
-  <img src="docs/screenshots/phone-spam-dark.png" width="32%" alt="A blocked scam message opened in dark mode, showing why it was judged spam">
+  <img src="docs/screenshots/phone-spam.png" width="32%" alt="A blocked scam message opened, showing why it was judged spam">
   <img src="docs/screenshots/phone-try.png" width="32%" alt="Try a message: a pasted SMS and the cleaner's verdict">
 </p>
 
