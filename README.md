@@ -17,6 +17,20 @@ It connects to your phone the way [messages.google.com/web](https://messages.goo
 [libgm](https://github.com/mautrix/gmessages/tree/main/pkg/libgm) from mautrix-gmessages. Nothing is
 installed on the phone and Google Messages stays your SMS app.
 
+## Screenshots
+
+Sample data from demo mode (`SMSC_DEMO=1`): every sender, code and number below is made up.
+
+![Offers on the desktop, with one message open: the verdict, the points behind it, and the words that teach the cleaner](docs/screenshots/desktop-offers.png)
+
+<p>
+  <img src="docs/screenshots/phone-offers.png" width="32%" alt="Offers list on the phone, with discount codes highlighted to copy">
+  <img src="docs/screenshots/phone-spam-dark.png" width="32%" alt="A blocked scam message opened in dark mode, showing why it was judged spam">
+  <img src="docs/screenshots/phone-try.png" width="32%" alt="Try a message: a pasted SMS and the cleaner's verdict">
+</p>
+
+![Activity: every run and each change it made on the phone](docs/screenshots/desktop-activity.png)
+
 ## How it decides
 
 1. **Rules** you can see and edit: *text contains*, *text matches pattern*, *sender is*, *sender matches pattern*.

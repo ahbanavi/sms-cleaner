@@ -5,6 +5,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -157,6 +158,13 @@ func main() {
 		log.Fatal().Err(err).Msg("init")
 	}
 	importDir(ctx, st, filepath.Join(cfg.dataDir, "import"), log)
+	if cfg.demo && len(st.TrainingCount(ctx)) == 0 {
+		if msg, err := importReader(ctx, st, "demo.jsonl", bytes.NewReader(gm.DemoTraining)); err != nil {
+			log.Warn().Err(err).Msg("demo training")
+		} else {
+			log.Info().Str("result", msg).Msg("loaded demo training")
+		}
+	}
 	if err := eng.Rebuild(ctx); err != nil {
 		log.Fatal().Err(err).Msg("rebuild")
 	}

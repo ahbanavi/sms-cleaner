@@ -290,7 +290,7 @@ tr.off td { opacity: .45; }
 .date-field { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); }
 .date-field .input { min-width: 9.5em; }
 
-@media (hover: none) { .kbd-hint { display: none; } }
+@media (hover: none) { .kbd-hint, .label-btn kbd { display: none; } }
 
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
