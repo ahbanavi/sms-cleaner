@@ -23,6 +23,9 @@ type Info struct {
 	Page     string `json:"page,omitempty"`
 	Checked  int64  `json:"checked,omitempty"`
 	Error    string `json:"error,omitempty"`
+	// How tells the UI how to install an update: "apk" on Android, "docker" in the Docker image,
+	// empty for a binary built by hand.
+	How string `json:"how,omitempty"`
 }
 
 // Checker asks GitHub for the latest release at most once per Interval.
@@ -34,6 +37,8 @@ type Checker struct {
 	Interval time.Duration
 	// API is the GitHub API base URL; tests point it elsewhere.
 	API string
+	// Docker is set when running from the Docker image, which is updated by pulling a new one.
+	Docker bool
 
 	mu      sync.Mutex
 	info    Info
@@ -47,6 +52,12 @@ func (c *Checker) Status() Info {
 	defer c.mu.Unlock()
 	info := c.info
 	info.Current = c.Current
+	switch {
+	case runtime.GOOS == "android":
+		info.How = "apk"
+	case c.Docker:
+		info.How = "docker"
+	}
 	if parse(c.Current) == nil {
 		return info
 	}

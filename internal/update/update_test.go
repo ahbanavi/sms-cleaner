@@ -49,3 +49,12 @@ func TestFetch(t *testing.T) {
 		t.Fatalf("dev build checked for updates: %+v", dev)
 	}
 }
+
+func TestHowDocker(t *testing.T) {
+	if got := (&Checker{Current: "dev", Docker: true}).Status().How; got != "docker" {
+		t.Fatalf("How = %q, want docker", got)
+	}
+	if got := (&Checker{Current: "dev"}).Status().How; got != "" {
+		t.Fatalf("How = %q for a plain binary, want empty", got)
+	}
+}

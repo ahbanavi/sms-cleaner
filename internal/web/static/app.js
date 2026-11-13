@@ -171,8 +171,9 @@ async function refreshStatus() {
   let skipped = '';
   try { skipped = localStorage.getItem('smsc.skipUpdate') || ''; } catch (e) {}
   if (up?.newer && up.download && skipped !== up.latest) {
+    const docker = up.how === 'docker';
     b.push(`<div class="banner">Version ${esc(up.latest)} is out (you have ${esc(up.current)}).
-      <a class="btn primary" href="${esc(up.download)}" target="_blank" rel="noopener noreferrer">Download</a>
+      <a class="btn primary" href="${esc(up.download)}" target="_blank" rel="noopener noreferrer">${docker ? "What's new" : 'Download'}</a>
       <button class="btn ghost" id="skipUpdate">Later</button></div>`);
   }
   $('#banners').innerHTML = b.join('');
@@ -915,9 +916,12 @@ function aboutHTML(up) {
   if (!up) return '<p class="small">Development build: no update check.</p>';
   const when = up.checked ? ` Checked ${esc(fmtTime(up.checked))}.` : '';
   let line = `<p>Version <b>${esc(up.current)}</b>.</p>`;
-  if (up.newer) line += `<p>Version <b>${esc(up.latest)}</b> is out. <a class="btn primary" href="${esc(up.download)}" target="_blank" rel="noopener noreferrer">Download</a></p>
-    <p class="hint">On the phone, open the downloaded file to update. The app keeps its data.</p>`;
-  else if (up.error) line += `<p class="hint">Couldn't check for updates: ${esc(up.error)}</p>`;
+  if (up.newer) {
+    const docker = up.how === 'docker';
+    line += `<p>Version <b>${esc(up.latest)}</b> is out. <a class="btn primary" href="${esc(up.download)}" target="_blank" rel="noopener noreferrer">${docker ? "What's new" : 'Download'}</a></p>`;
+    if (up.how === 'apk') line += '<p class="hint">On the phone, open the downloaded file to update. The app keeps its data.</p>';
+    if (docker) line += '<p class="hint">To update, run <code>docker compose pull &amp;&amp; docker compose up -d</code> where your compose.yml is. The data folder is kept.</p>';
+  } else if (up.error) line += `<p class="hint">Couldn't check for updates: ${esc(up.error)}</p>`;
   else if (up.latest) line += `<p class="hint">Up to date.${when}</p>`;
   else line += '<p class="hint">Checking for updates…</p>';
   return line + '<p class="hint"><a href="https://github.com/ahbanavi/sms-cleaner/releases" target="_blank" rel="noopener noreferrer">All releases</a></p>';

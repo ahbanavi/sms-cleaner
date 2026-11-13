@@ -42,6 +42,16 @@ type config struct {
 	demo                                                          bool
 }
 
+// checkWritable fails when files can't be created in dir.
+func checkWritable(dir string) error {
+	f, err := os.CreateTemp(dir, ".write-test-*")
+	if err != nil {
+		return err
+	}
+	f.Close()
+	return os.Remove(f.Name())
+}
+
 func env(k, def string) string {
 	if v := os.Getenv(k); v != "" {
 		return v
@@ -113,6 +123,12 @@ func main() {
 	}
 	if err := os.MkdirAll(cfg.dataDir, 0o700); err != nil {
 		log.Fatal().Err(err).Msg("data dir")
+	}
+	if err := checkWritable(cfg.dataDir); err != nil {
+		// Typical with Docker: a bind-mounted folder the daemon created, owned by root.
+		uid, gid := os.Getuid(), os.Getgid()
+		log.Fatal().Err(err).Msgf("data dir %s isn't writable by uid %d. Give the folder to that user, "+
+			"e.g. on the Docker host: sudo chown -R %d:%d data", cfg.dataDir, uid, uid, gid)
 	}
 	setupDNS(log)
 	sessionPath := filepath.Join(cfg.dataDir, "session.json")
@@ -228,7 +244,8 @@ func main() {
 			Import: func(ctx context.Context, name string, r io.Reader) (string, error) {
 				return importReader(ctx, st, name, r)
 			},
-			Update: &update.Checker{Repo: "ahbanavi/sms-cleaner", Current: version, Client: &http.Client{Timeout: 15 * time.Second}},
+			Update: &update.Checker{Repo: "ahbanavi/sms-cleaner", Current: version, Client: &http.Client{Timeout: 15 * time.Second},
+				Docker: os.Getenv("SMSC_DOCKER") == "1"},
 		}
 		go eng.Scheduler(ctx)
 		hs := &http.Server{Addr: cfg.listen, Handler: srv.Handler(), ReadHeaderTimeout: 10 * time.Second}
