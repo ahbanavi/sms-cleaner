@@ -31,6 +31,7 @@ import (
 	"github.com/ahbanavi/sms-cleaner/internal/gm"
 	"github.com/ahbanavi/sms-cleaner/internal/notify"
 	"github.com/ahbanavi/sms-cleaner/internal/store"
+	"github.com/ahbanavi/sms-cleaner/internal/update"
 	"github.com/ahbanavi/sms-cleaner/internal/web"
 )
 
@@ -209,7 +210,9 @@ func main() {
 		srv := &web.Server{Engine: eng, Store: st, Pairer: pairer, Keeper: keeper, SessionPath: sessionPath, Demo: cfg.demo, User: cfg.user, Pass: cfg.pass, Log: log,
 			Import: func(ctx context.Context, name string, r io.Reader) (string, error) {
 				return importReader(ctx, st, name, r)
-			}}
+			},
+			Update: &update.Checker{Repo: "ahbanavi/sms-cleaner", Current: version, Client: &http.Client{Timeout: 15 * time.Second}},
+		}
 		go eng.Scheduler(ctx)
 		hs := &http.Server{Addr: cfg.listen, Handler: srv.Handler(), ReadHeaderTimeout: 10 * time.Second}
 		go func() {

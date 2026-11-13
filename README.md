@@ -113,6 +113,10 @@ out Messages for web sessions that stay unused for about two weeks.
 when Android asks). Every push to `main` publishes a new signed release (`.github/workflows/build.yml`);
 installing a newer APK updates the app in place and keeps its data.
 
+**Updates:** the app checks GitHub for a newer release every few hours and shows a **Download**
+banner when there is one; **Phone & settings › About** shows the installed version. To update
+without opening the app, add this repository's URL to [Obtainium](https://obtainium.imranr.dev).
+
 **Signing.** Releases are signed with one key, kept in the repository secrets `SMSC_KEYSTORE_BASE64`,
 `SMSC_KEYSTORE_PASSWORD`, `SMSC_KEY_ALIAS` and `SMSC_KEY_PASSWORD`. Losing that key means the next
 APK can't update the installed app (it would have to be uninstalled, which deletes its data), so keep

@@ -24,6 +24,7 @@ import (
 	"github.com/ahbanavi/sms-cleaner/internal/gm"
 	"github.com/ahbanavi/sms-cleaner/internal/store"
 	"github.com/ahbanavi/sms-cleaner/internal/textnorm"
+	"github.com/ahbanavi/sms-cleaner/internal/update"
 )
 
 //go:embed static
@@ -40,6 +41,8 @@ type Server struct {
 	User, Pass  string
 	Log         zerolog.Logger
 	Import      func(ctx context.Context, name string, r io.Reader) (string, error)
+	// Update reports newer releases; nil disables the check.
+	Update *update.Checker
 }
 
 // Handler returns the root handler.
@@ -149,8 +152,15 @@ func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 		"paired": s.paired(), "demo": s.Demo, "running": running, "progress": progress,
 		"mode": s.Engine.Setting(ctx, engine.SetMode), "next_run": nextTS, "last_run": last,
 		"stats": s.Store.Stats(ctx), "model_examples": b.Examples(), "model_classes": b.ClassCounts(),
-		"pair": s.Pairer.State(), "phone": s.Keeper.Status(),
+		"pair": s.Pairer.State(), "phone": s.Keeper.Status(), "update": s.updateStatus(),
 	})
+}
+
+func (s *Server) updateStatus() any {
+	if s.Update == nil || s.Demo {
+		return nil
+	}
+	return s.Update.Status()
 }
 
 func (s *Server) run(w http.ResponseWriter, r *http.Request) {

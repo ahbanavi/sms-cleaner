@@ -115,7 +115,17 @@ async function refreshStatus() {
   if (st.demo) b.push(`<div class="banner warn">Demo mode: sample messages, no phone connected.</div>`);
   else if (!st.paired) b.push(`<div class="banner">Your phone isn't paired yet. <button class="btn primary" onclick="go('phone')">Pair phone</button></div>`);
   else if (st.phone?.error) b.push(`<div class="banner warn">Can't reach your phone: ${esc(st.phone.error)} <button class="btn" onclick="go('phone')">Details</button></div>`);
+  const up = st.update;
+  let skipped = '';
+  try { skipped = localStorage.getItem('smsc.skipUpdate') || ''; } catch (e) {}
+  if (up?.newer && up.download && skipped !== up.latest) {
+    b.push(`<div class="banner">Version ${esc(up.latest)} is out (you have ${esc(up.current)}).
+      <a class="btn primary" href="${esc(up.download)}" target="_blank" rel="noopener noreferrer">Download</a>
+      <button class="btn ghost" id="skipUpdate">Later</button></div>`);
+  }
   $('#banners').innerHTML = b.join('');
+  const skip = $('#skipUpdate');
+  if (skip) skip.onclick = () => { try { localStorage.setItem('smsc.skipUpdate', up.latest); } catch (e) {} refreshStatus(); };
   $('#runNow').disabled = $('#runPreview').disabled = st.running || !st.paired;
 
   if (S.wasRunning && !st.running) {
@@ -578,6 +588,7 @@ async function renderPhone() {
         ${field('min_score', 'Points needed to decide', 'Higher means more messages left for review.', 'type="number" min="0.5" step="0.5"')}
         ${field('spam_min_score', 'Points needed to call it spam', 'Spam gets blocked, so it needs more evidence.', 'type="number" min="0.5" step="0.5"')}
         <button class="btn primary" id="saveSet">Save settings</button></div>
+      <div class="panel"><h2>About</h2>${aboutHTML(st.update)}</div>
     </div>`;
   drawPair(pair, st);
   $('#saveSet').onclick = async () => {
@@ -585,6 +596,17 @@ async function renderPhone() {
     $$('[data-k]').forEach((i) => (body[i.dataset.k] = i.value));
     try { await api('settings', { method: 'PUT', body }); toast('Settings saved'); refreshStatus(); } catch (e) { toast(e.message); }
   };
+}
+function aboutHTML(up) {
+  if (!up) return '<p class="small">Development build: no update check.</p>';
+  const when = up.checked ? ` Checked ${esc(fmtTime(up.checked))}.` : '';
+  let line = `<p>Version <b>${esc(up.current)}</b>.</p>`;
+  if (up.newer) line += `<p>Version <b>${esc(up.latest)}</b> is out. <a class="btn primary" href="${esc(up.download)}" target="_blank" rel="noopener noreferrer">Download</a></p>
+    <p class="hint">On the phone, open the downloaded file to update. The app keeps its data.</p>`;
+  else if (up.error) line += `<p class="hint">Couldn't check for updates: ${esc(up.error)}</p>`;
+  else if (up.latest) line += `<p class="hint">Up to date.${when}</p>`;
+  else line += '<p class="hint">Checking for updates…</p>';
+  return line + '<p class="hint"><a href="https://github.com/ahbanavi/sms-cleaner/releases" target="_blank" rel="noopener noreferrer">All releases</a></p>';
 }
 function drawPair(p, st) {
   const box = $('#pairBox');
