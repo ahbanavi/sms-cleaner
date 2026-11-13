@@ -2,7 +2,14 @@ plugins {
     id("com.android.application")
 }
 
-val appVersion = "0.1.0"
+// CI sets these from the run number; local builds are 1 / "dev".
+val appVersionCode = System.getenv("SMSC_VERSION_CODE")?.toIntOrNull() ?: 1
+val appVersionName = System.getenv("SMSC_VERSION_NAME") ?: "dev"
+
+// The release key, from the environment (CI secrets, or ~/.android/sms-cleaner/signing.env
+// locally). Without it, release builds fall back to the debug key and won't install over
+// a release from GitHub.
+val keystorePath: String? = System.getenv("SMSC_KEYSTORE")?.takeIf { it.isNotBlank() && file(it).exists() }
 
 android {
     namespace = "io.github.ahbanavi.smscleaner"
@@ -12,14 +19,34 @@ android {
         applicationId = "io.github.ahbanavi.smscleaner"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = appVersion
+        versionCode = appVersionCode
+        versionName = appVersionName
         ndk { abiFilters += "arm64-v8a" }
     }
 
+    signingConfigs {
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("SMSC_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("SMSC_KEY_ALIAS")
+                keyPassword = System.getenv("SMSC_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
+        val releaseKey = signingConfigs.findByName("release")
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            signingConfig = releaseKey ?: signingConfigs.getByName("debug")
+        }
+        debug {
+            // With the release key at hand, debug builds use it too, so a development
+            // build installs over the GitHub release (and back) without losing data.
+            if (releaseKey != null) signingConfig = releaseKey
         }
     }
 
@@ -45,7 +72,7 @@ val buildGo = tasks.register<Exec>("buildGo") {
     environment("CGO_ENABLED", "0")
     commandLine(
         "go", "build", "-trimpath",
-        "-ldflags=-s -w -X main.version=$appVersion",
+        "-ldflags=-s -w -X main.version=$appVersionName",
         "-o", goBinary.asFile.absolutePath, ".",
     )
     inputs.files(
@@ -53,6 +80,7 @@ val buildGo = tasks.register<Exec>("buildGo") {
             include("*.go", "go.mod", "go.sum", "internal/**")
         },
     )
+    inputs.property("version", appVersionName)
     outputs.file(goBinary)
 }
 tasks.named("preBuild") { dependsOn(buildGo) }

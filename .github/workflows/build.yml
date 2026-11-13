@@ -1,0 +1,97 @@
+# On every push to main: run the Go tests, build the Android app and publish it as a GitHub release
+# (vX.Y.Z, the last number being the run number), with the R8 mapping beside it. Other branches aren't built.
+#
+# The APK is a release build, shrunk and optimized by R8. With the signing key in the repository's secrets
+# (SMSC_KEYSTORE_BASE64, SMSC_KEYSTORE_PASSWORD, SMSC_KEY_ALIAS, SMSC_KEY_PASSWORD), it is signed with that
+# one key, so each new APK installs over the last one and keeps the app's data. Without it, it is signed with
+# a debug key made for that run only: it installs on a phone without sms-cleaner, but not over another build.
+
+name: Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # rebuilds main by hand
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # for the release
+    env:
+      VERSION: 1.0.${{ github.run_number }}
+      SMSC_VERSION_CODE: ${{ github.run_number }}
+      SMSC_VERSION_NAME: 1.0.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # The app embeds the Go server, built by the buildGo Gradle task.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Go tests
+        run: go vet ./... && go test ./...
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # No Android SDK step: the runner image has one in $ANDROID_HOME, with its licenses accepted, and the
+      # Android Gradle plugin fetches any platform or build tools it lacks.
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Signing key
+        id: key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SMSC_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "SMSC_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "suffix=" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No SMSC_KEYSTORE_BASE64 secret: signing with a one-off debug key, so this APK won't install over another build."
+            echo "suffix=-debug-key" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Lint's release check (lintVitalRelease) is left out: it takes about as long as R8.
+      - name: Build
+        working-directory: android
+        env:
+          SMSC_KEYSTORE_PASSWORD: ${{ secrets.SMSC_KEYSTORE_PASSWORD }}
+          SMSC_KEY_ALIAS: ${{ secrets.SMSC_KEY_ALIAS }}
+          SMSC_KEY_PASSWORD: ${{ secrets.SMSC_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease -x lintVitalRelease
+
+      - name: Name the APK
+        env:
+          SUFFIX: ${{ steps.key.outputs.suffix }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk "sms-cleaner-$VERSION$SUFFIX.apk"
+          cp android/app/build/outputs/mapping/release/mapping.txt "sms-cleaner-$VERSION-mapping.txt"
+          echo "APK=sms-cleaner-$VERSION$SUFFIX.apk" >> "$GITHUB_ENV"
+          echo "MAPPING=sms-cleaner-$VERSION-mapping.txt" >> "$GITHUB_ENV"
+
+      # R8 renames the app's classes: the mapping turns a crash's stack trace back into real names (retrace).
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUFFIX: ${{ steps.key.outputs.suffix }}
+        run: |
+          notes="Built from $GITHUB_SHA. Install the APK on the phone; it updates the app in place and keeps its data."
+          if [ -n "$SUFFIX" ]; then
+            notes="$notes Signed with a one-off debug key: uninstall another sms-cleaner build first."
+          fi
+          notes="$notes The mapping file turns a crash's stack trace back into real class names."
+          gh release create "v$VERSION" "$APK" "$MAPPING" \
+            --target "$GITHUB_SHA" \
+            --title "sms-cleaner $VERSION" \
+            --notes "$notes"

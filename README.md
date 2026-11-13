@@ -94,7 +94,17 @@ on the phone, shows the same UI, and stops it about a minute after you leave the
 progress finishes first). Every three days it connects once in the background, because Google signs
 out Messages for web sessions that stay unused for about two weeks.
 
-Build it (needs Go, JDK 17+ and the Android SDK; arm64 phones only):
+**Install:** download `sms-cleaner-<version>.apk` from the
+[latest release](../../releases/latest) on the phone and open it (allow installs from your browser
+when Android asks). Every push to `main` publishes a new signed release (`.github/workflows/build.yml`);
+installing a newer APK updates the app in place and keeps its data.
+
+**Signing.** Releases are signed with one key, kept in the repository secrets `SMSC_KEYSTORE_BASE64`,
+`SMSC_KEYSTORE_PASSWORD`, `SMSC_KEY_ALIAS` and `SMSC_KEY_PASSWORD`. Losing that key means the next
+APK can't update the installed app (it would have to be uninstalled, which deletes its data), so keep
+a backup of the keystore outside GitHub; secrets can't be read back.
+
+**Build it yourself** (needs Go, JDK 17+ and the Android SDK; arm64 phones only):
 
 ```bash
 cd android
@@ -102,10 +112,14 @@ cd android
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
+With `SMSC_KEYSTORE`, `SMSC_KEYSTORE_PASSWORD`, `SMSC_KEY_ALIAS` and `SMSC_KEY_PASSWORD` set, local
+builds (debug ones too) are signed with the release key, so they install over a GitHub release and
+back without losing data. Without them, a debug build needs the installed release removed first.
+
 Coming from the PC or Docker version? `android/move-data.sh` copies your labels, rules, saved offers
-and history into the app. Add `--session` to move the pairing too (stop the PC cleaner first; two
-cleaners can't share one pairing). The app turns off Android backup, since its data includes
-your messages and Google cookies.
+and history into a debug build of the app. Add `--session` to move the pairing too (stop the PC
+cleaner first; two cleaners can't share one pairing). The app turns off Android backup, since its
+data includes your messages and Google cookies.
 
 ### Commands
 

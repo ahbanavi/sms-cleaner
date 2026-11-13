@@ -27,10 +27,10 @@ dst = sqlite3.connect(sys.argv[2])
 src.backup(dst)
 dst.close()' "$DATA/sms-cleaner.db" "$tmp/sms-cleaner.db"
 
-in_app() { "$ADB" shell "run-as $PKG sh -c '$1'"; }
+in_app() { "$ADB" shell "run-as $PKG sh -c 'umask 077; $1'"; }
 
 "$ADB" shell am force-stop "$PKG"
-in_app 'mkdir -p files/data && rm -f files/data/sms-cleaner.db-wal files/data/sms-cleaner.db-shm'
+in_app 'mkdir -p files/data && chmod 700 files files/data && rm -f files/data/sms-cleaner.db-wal files/data/sms-cleaner.db-shm'
 in_app 'cat > files/data/sms-cleaner.db' < "$tmp/sms-cleaner.db"
 if [ "$session" = 1 ]; then
   [ -f "$DATA/session.json" ] || { echo "no session.json in $DATA" >&2; exit 1; }
