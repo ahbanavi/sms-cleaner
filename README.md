@@ -1,6 +1,17 @@
 # sms-cleaner
 
-Keeps the SMS inbox of an Android phone running **Google Messages** clean, on a schedule:
+[![Android app](https://img.shields.io/github/v/release/ahbanavi/sms-cleaner?label=Android%20app&logo=android&color=3ddc84)](../../releases/latest)
+[![Docker image](https://img.shields.io/github/v/release/ahbanavi/sms-cleaner?label=Docker&logo=docker&color=2496ed)](#docker)
+
+Keeps the SMS inbox of an Android phone running **Google Messages** clean, on a schedule.
+
+**Two ways to run it, same cleaner and same UI:**
+
+- **[Android app](#android-app)** on the phone itself: no PC or server needed. Install the APK from the
+  [latest release](../../releases/latest).
+- **[Server](#docker)** on a PC, Raspberry Pi or NAS: a Docker image or a single binary.
+
+What it does with each message:
 
 | The cleaner decides a message is… | What happens on the phone |
 |---|---|
@@ -13,25 +24,32 @@ Keeps the SMS inbox of an Android phone running **Google Messages** clean, on a 
 Never touched, never even read: **contacts**, group chats, pinned chats, and any chat you have replied to.
 A run that cannot load your contact list stops instead of guessing.
 
-It connects to your phone the way [messages.google.com/web](https://messages.google.com/web) does, using
-[libgm](https://github.com/mautrix/gmessages/tree/main/pkg/libgm) from mautrix-gmessages. Nothing is
-installed on the phone and Google Messages stays your SMS app.
+It connects to Google Messages the way [messages.google.com/web](https://messages.google.com/web) does,
+using [libgm](https://github.com/mautrix/gmessages/tree/main/pkg/libgm) from mautrix-gmessages, so
+Google Messages stays your SMS app. The Android app doesn't become the default SMS app and asks for no
+SMS permission.
 
 ## Screenshots
 
 Sample data from demo mode (`SMSC_DEMO=1`): every sender, code and number below is made up.
 
-![Offers on the desktop, with one message open: the verdict, the points behind it, and the words that teach the cleaner](docs/screenshots/desktop-offers.png)
+### Android app
 
 <p>
-  <img src="docs/screenshots/phone-home.png" width="32%" alt="Phone Home: the last clean, a big Clean now button, a message waiting for review and the lists">
-  <img src="docs/screenshots/phone-messages.png" width="32%" alt="Phone Messages: swipeable list tabs, filter chips and Copy buttons for discount codes">
+  <img src="docs/screenshots/phone-home.png" width="32%" alt="Home in the app: the last clean, a big Clean now button, a message waiting for review and the lists">
+  <img src="docs/screenshots/phone-messages.png" width="32%" alt="Messages in the app: swipeable list tabs, filter chips and Copy buttons for discount codes">
   <img src="docs/screenshots/phone-message.png" width="32%" alt="A scam message opened full screen: the verdict, why, words to teach with and the label buttons pinned at the bottom">
 </p>
 <p>
-  <img src="docs/screenshots/phone-review.png" width="32%" alt="Needs review on the phone: label buttons right on each card">
-  <img src="docs/screenshots/phone-settings.png" width="32%" alt="Phone Settings: phone connection, cleaning, teaching and app version as a list">
+  <img src="docs/screenshots/phone-review.png" width="32%" alt="Needs review in the app: label buttons right on each card">
+  <img src="docs/screenshots/phone-settings.png" width="32%" alt="Settings in the app: phone connection, cleaning, teaching and app version as a list">
 </p>
+
+### Web UI (server)
+
+Open on a phone's browser, the server's UI switches to the same layout as the app.
+
+![Offers on the desktop, with one message open: the verdict, the points behind it, and the words that teach the cleaner](docs/screenshots/desktop-offers.png)
 
 ![Activity: every run and each change it made on the phone](docs/screenshots/desktop-activity.png)
 
@@ -70,74 +88,23 @@ Open a message in the UI:
 
 ## Run it
 
-### Locally
+### Android app
 
-```bash
-go build -o sms-cleaner .
-./sms-cleaner pair            # QR in the terminal (or `pair -google`); or pair from the web UI
-SMSC_UI_PASSWORD=secret ./sms-cleaner serve   # http://localhost:8080
-```
+The app runs the cleaner on the phone itself, so no PC or server is needed (`android/` wraps the
+same server). Its layout is made for the phone: a bottom bar (Home, Review, Messages, History,
+Settings), one big **Clean now** on Home, label buttons right on the review cards, lists you swipe
+between, and messages that open full screen with the label buttons pinned at the bottom.
 
-Try the UI without a phone: `SMSC_DEMO=1 ./sms-cleaner serve`.
-
-### Docker
-
-Every release publishes an image to `ghcr.io/ahbanavi/sms-cleaner` for amd64, arm64 and armv7
-(a PC, a Raspberry Pi or an Orange Pi), tagged with its version and `latest`, and attaches a ready
-`compose.yml` and `env.example`:
-
-```bash
-mkdir sms-cleaner && cd sms-cleaner
-curl -fsSLO https://github.com/ahbanavi/sms-cleaner/releases/latest/download/compose.yml
-curl -fsSL https://github.com/ahbanavi/sms-cleaner/releases/latest/download/env.example -o .env
-nano .env               # set SMSC_UI_PASSWORD; optionally Telegram, a proxy, the port, the time zone
-mkdir -p data           # before the first start, see below
-docker compose up -d
-```
-
-- **`data/`** holds the database and the phone pairing, and must belong to `PUID`:`PGID` from `.env`
-  (default `1000`; `id` shows yours). If Docker creates the folder itself, it belongs to root and the
-  cleaner stops with *data dir /data isn't writable*: run `sudo chown -R 1000:1000 data`.
-- **Update** with `docker compose pull && docker compose up -d`. The UI says when a newer version is
-  out (**Phone & settings › About**). To stay on one version, set `SMSC_VERSION=1.0.12` in `.env`.
-- **Build the image yourself** from a checkout of this repository:
-  `docker compose -f compose.yml -f compose.build.yml up -d --build`.
-
-Open `http://<host>:8085`, go to **Phone & settings** and pair:
-
-- **Google account** (when Device pairing on the phone has no QR scanner): sign in at
-  messages.google.com/web in a private window, copy the page request (DevTools › Network › Doc) as cURL,
-  paste it, and tap the emoji the phone shows. Close the private window without signing out.
-- **QR code**: Google Messages › profile › Device pairing › QR code scanner.
-
-Then:
-
-1. Press **Preview run** and look at **Activity**: it lists every change a real run would make.
-2. Label what landed in **Needs review**.
-3. Flip the header switch to **Live**. **Clean now** then changes the phone, at most 50 phone changes
-   per run until you raise the limit.
-4. The schedule is off until you set **Run every (minutes)** in **Phone & settings** (e.g. `360`).
-   Scheduled runs follow the Dry run / Live switch.
-
-Files put in `data/import/` (`*.jsonl` training, `*.json` rules) are imported on start and renamed `*.done`.
-
-### On the phone itself (Android app)
-
-`android/` wraps the same server in an app, so no PC or server is needed. On a phone-sized screen the
-UI switches to a phone layout: a bottom bar (Home, Review, Messages, History, Settings), one big
-**Clean now** on Home, label buttons right on the review cards, lists you swipe between, and messages
-that open full screen with the label buttons pinned at the bottom.
+**Install:** download `sms-cleaner-<version>.apk` from the
+[latest release](../../releases/latest) on the phone and open it (allow installs from your browser
+when Android asks). Every push to `main` publishes a new signed release (`.github/workflows/build.yml`);
+installing a newer APK updates the app in place and keeps its data.
 
 The app starts the cleaner while you use it and stops it about a minute after you leave (a clean in
 progress finishes first). **Automatic cleaning** (Settings › Cleaning) also works with the app closed:
 Android checks about once an hour and the cleaner runs when the interval is due, following the
 Preview only / Change the phone setting, then posts a summary notification. Every three days it also
 connects once, because Google signs out Messages for web sessions that stay unused for about two weeks.
-
-**Install:** download `sms-cleaner-<version>.apk` from the
-[latest release](../../releases/latest) on the phone and open it (allow installs from your browser
-when Android asks). Every push to `main` publishes a new signed release (`.github/workflows/build.yml`);
-installing a newer APK updates the app in place and keeps its data.
 
 **Updates:** the app checks GitHub for a newer release every few hours and shows a **Download**
 banner when there is one; **Phone & settings › About** shows the installed version. To update
@@ -164,6 +131,59 @@ Coming from the PC or Docker version? `android/move-data.sh` copies your labels,
 and history into a debug build of the app. Add `--session` to move the pairing too (stop the PC
 cleaner first; two cleaners can't share one pairing). The app turns off Android backup, since its
 data includes your messages and Google cookies.
+
+### Docker
+
+Every release publishes an image to `ghcr.io/ahbanavi/sms-cleaner` for amd64, arm64 and armv7
+(a PC, a Raspberry Pi or an Orange Pi), tagged with its version and `latest`, and attaches a ready
+`compose.yml` and `env.example`:
+
+```bash
+mkdir sms-cleaner && cd sms-cleaner
+curl -fsSLO https://github.com/ahbanavi/sms-cleaner/releases/latest/download/compose.yml
+curl -fsSL https://github.com/ahbanavi/sms-cleaner/releases/latest/download/env.example -o .env
+nano .env               # set SMSC_UI_PASSWORD; optionally Telegram, a proxy, the port, the time zone
+mkdir -p data           # before the first start, see below
+docker compose up -d
+```
+
+- **`data/`** holds the database and the phone pairing, and must belong to `PUID`:`PGID` from `.env`
+  (default `1000`; `id` shows yours). If Docker creates the folder itself, it belongs to root and the
+  cleaner stops with *data dir /data isn't writable*: run `sudo chown -R 1000:1000 data`.
+- **Update** with `docker compose pull && docker compose up -d`. The UI says when a newer version is
+  out (**Phone & settings › About**). To stay on one version, set `SMSC_VERSION=1.0.12` in `.env`.
+- **Build the image yourself** from a checkout of this repository:
+  `docker compose -f compose.yml -f compose.build.yml up -d --build`.
+
+### From source
+
+```bash
+go build -o sms-cleaner .
+./sms-cleaner pair            # QR in the terminal (or `pair -google`); or pair from the web UI
+SMSC_UI_PASSWORD=secret ./sms-cleaner serve   # http://localhost:8080
+```
+
+Try the UI without a phone: `SMSC_DEMO=1 ./sms-cleaner serve`.
+
+### Pair and start cleaning
+
+Open the app (or `http://<host>:8085` for a server), go to **Phone & settings** and pair:
+
+- **Google account** (when Device pairing on the phone has no QR scanner): sign in at
+  messages.google.com/web in a private window, copy the page request (DevTools › Network › Doc) as cURL,
+  paste it, and tap the emoji the phone shows. Close the private window without signing out.
+- **QR code**: Google Messages › profile › Device pairing › QR code scanner.
+
+Then:
+
+1. Press **Preview run** and look at **Activity**: it lists every change a real run would make.
+2. Label what landed in **Needs review**.
+3. Flip the header switch to **Live**. **Clean now** then changes the phone, at most 50 phone changes
+   per run until you raise the limit.
+4. The schedule is off until you set **Run every (minutes)** in **Phone & settings** (e.g. `360`).
+   Scheduled runs follow the Dry run / Live switch.
+
+Files put in `data/import/` (`*.jsonl` training, `*.json` rules) are imported on start and renamed `*.done`.
 
 ### Commands
 
