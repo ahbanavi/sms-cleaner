@@ -287,6 +287,11 @@ tr.off td { opacity: .45; }
 .modal h2 { margin: 0 0 8px; font-size: 18px; }
 .modal .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 
+.date-field { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); }
+.date-field .input { min-width: 9.5em; }
+
+@media (hover: none) { .kbd-hint { display: none; } }
+
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
   .app { grid-template-columns: 200px minmax(0, 1fr); }
@@ -298,10 +303,14 @@ tr.off td { opacity: .45; }
   .teach.idle { display: none; }
 }
 @media (max-width: 720px) {
-  .top { padding: 8px 16px; gap: 10px; }
-  .app, .app.wide { grid-template-columns: minmax(0, 1fr); }
+  /* The header scrolls away; the tray strip stays reachable at the top. */
+  .top { position: static; padding: 8px 16px; gap: 10px; }
+  /* align-content: start keeps the min-height from stretching the tray strip. */
+  .app, .app.wide { grid-template-columns: minmax(0, 1fr); align-content: start; }
   .rail {
-    display: flex; gap: 4px; overflow-x: auto; padding: 8px 16px; border-inline-end: 0; border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 20; background: var(--paper);
+    display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding: 8px 16px;
+    border-inline-end: 0; border-bottom: 1px solid var(--line);
   }
   .rail h2 { display: none; }
   .tray { width: auto; flex: none; }

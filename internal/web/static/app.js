@@ -163,7 +163,7 @@ window.addEventListener('hashchange', () => { S.view = location.hash.replace('#/
 $$('.tray').forEach((b) => (b.onclick = () => go(b.dataset.view)));
 
 const LIST_VIEWS = {
-  review: { title: 'Needs review', cat: 'unknown', sub: 'The classifier wasn\'t sure about these, so it left them in your inbox. Label a few and it learns from them. Keys: ↑ ↓ to move, S O A K to label.', label: 'none', onPhone: 'yes' },
+  review: { title: 'Needs review', cat: 'unknown', sub: 'The classifier wasn\'t sure about these, so it left them in your inbox. Label a few and it learns from them.', kbd: true, label: 'none', onPhone: 'yes' },
   spam: { title: 'Spam', cat: 'spam', sub: 'Blocked, reported to Google and deleted from the phone. Copies are kept here.' },
   offers: { title: 'Offers', cat: 'offer', sub: 'Discounts and promotions, removed from your phone and kept here to search. Tap a code to copy it.', offers: true },
   archive: { title: 'Archive', cat: 'archive', sub: 'Bank alerts, codes, deliveries and other service notices. They stay on your phone, under Archived.' },
@@ -186,12 +186,12 @@ async function renderList(v) {
   const main = $('#main');
   main.innerHTML = `
     <div class="view-head"><h1>${esc(v.title)}</h1><span class="muted num" id="total"></span></div>
-    <p class="view-sub">${esc(v.sub)}</p>
+    <p class="view-sub">${esc(v.sub)}${v.kbd ? '<span class="kbd-hint"> Keys: ↑ ↓ to move, S O A K to label.</span>' : ''}</p>
     <div class="filters">
       <input class="input search" type="search" id="q" placeholder="Search text or sender" value="${esc(f.q)}" aria-label="Search">
       ${v.offers ? `<select class="input" id="sender" aria-label="Sender"><option value="">All senders</option></select>
-        <input class="input" type="date" id="from" value="${esc(f.from)}" aria-label="From date">
-        <input class="input" type="date" id="to" value="${esc(f.to)}" aria-label="To date">` : ''}
+        <label class="date-field">From <input class="input" type="date" id="from" value="${esc(f.from)}"></label>
+        <label class="date-field">To <input class="input" type="date" id="to" value="${esc(f.to)}"></label>` : ''}
       ${S.view !== 'review' ? `<div class="seg" role="group" aria-label="Where">
         ${[['', 'All'], ['yes', 'On phone'], ['no', 'Removed']].map(([k, n]) => `<button data-onphone="${k}" aria-pressed="${f.onPhone === k}">${n}</button>`).join('')}</div>
         <div class="seg" role="group" aria-label="Labels">
