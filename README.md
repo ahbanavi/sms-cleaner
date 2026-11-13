@@ -80,12 +80,28 @@ SMSC_UI_PASSWORD=secret ./sms-cleaner serve   # http://localhost:8080
 
 Try the UI without a phone: `SMSC_DEMO=1 ./sms-cleaner serve`.
 
-### Docker (e.g. the Orange Pi arr stack)
+### Docker
+
+Every release publishes an image to `ghcr.io/ahbanavi/sms-cleaner` for amd64, arm64 and armv7
+(a PC, a Raspberry Pi or an Orange Pi), tagged with its version and `latest`, and attaches a ready
+`compose.yml` and `env.example`:
 
 ```bash
-cp .env.example .env    # set SMSC_UI_PASSWORD, optionally Telegram
-docker compose up -d --build
+mkdir sms-cleaner && cd sms-cleaner
+curl -fsSLO https://github.com/ahbanavi/sms-cleaner/releases/latest/download/compose.yml
+curl -fsSL https://github.com/ahbanavi/sms-cleaner/releases/latest/download/env.example -o .env
+nano .env               # set SMSC_UI_PASSWORD; optionally Telegram, a proxy, the port, the time zone
+mkdir -p data           # before the first start, see below
+docker compose up -d
 ```
+
+- **`data/`** holds the database and the phone pairing, and must belong to `PUID`:`PGID` from `.env`
+  (default `1000`; `id` shows yours). If Docker creates the folder itself, it belongs to root and the
+  cleaner stops with *data dir /data isn't writable*: run `sudo chown -R 1000:1000 data`.
+- **Update** with `docker compose pull && docker compose up -d`. The UI says when a newer version is
+  out (**Phone & settings › About**). To stay on one version, set `SMSC_VERSION=1.0.12` in `.env`.
+- **Build the image yourself** from a checkout of this repository:
+  `docker compose -f compose.yml -f compose.build.yml up -d --build`.
 
 Open `http://<host>:8085`, go to **Phone & settings** and pair:
 

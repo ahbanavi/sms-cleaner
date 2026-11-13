@@ -1,5 +1,9 @@
-# On every push to main: run the Go tests, build the Android app and publish it as a GitHub release
-# (vX.Y.Z, the last number being the run number), with the R8 mapping beside it. Other branches aren't built.
+# On every push to main: run the Go tests, then build the Android app and the Docker image side by side, and
+# publish both as release vX.Y.Z (the last number being the run number). Other branches aren't built.
+#
+# The release holds the APK, its R8 mapping, and a ready compose.yml and env.example for Docker. The image goes to
+# ghcr.io/<owner>/sms-cleaner, tagged with the version and latest, for amd64, arm64 and armv7. The release is made
+# last, so the in-app update check never announces a version whose APK or image isn't there yet.
 #
 # The APK is a release build, shrunk and optimized by R8. With the signing key in the repository's secrets
 # (SMSC_KEYSTORE_BASE64, SMSC_KEYSTORE_PASSWORD, SMSC_KEY_ALIAS, SMSC_KEY_PASSWORD), it is signed with that
@@ -17,14 +21,31 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  VERSION: 1.0.${{ github.run_number }}
+
 jobs:
-  build:
+  test:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
-      contents: write # for the release
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Go tests
+        run: go vet ./... && go test ./...
+
+  android:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      suffix: ${{ steps.key.outputs.suffix }}
     env:
-      VERSION: 1.0.${{ github.run_number }}
       SMSC_VERSION_CODE: ${{ github.run_number }}
       SMSC_VERSION_NAME: 1.0.${{ github.run_number }}
     steps:
@@ -34,9 +55,6 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-
-      - name: Go tests
-        run: go vet ./... && go test ./...
 
       - uses: actions/setup-java@v6
         with:
@@ -71,27 +89,93 @@ jobs:
           SMSC_KEY_PASSWORD: ${{ secrets.SMSC_KEY_PASSWORD }}
         run: ./gradlew assembleRelease -x lintVitalRelease
 
+      # R8 renames the app's classes: the mapping turns a crash's stack trace back into real names (retrace).
       - name: Name the APK
         env:
           SUFFIX: ${{ steps.key.outputs.suffix }}
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk "sms-cleaner-$VERSION$SUFFIX.apk"
-          cp android/app/build/outputs/mapping/release/mapping.txt "sms-cleaner-$VERSION-mapping.txt"
-          echo "APK=sms-cleaner-$VERSION$SUFFIX.apk" >> "$GITHUB_ENV"
-          echo "MAPPING=sms-cleaner-$VERSION-mapping.txt" >> "$GITHUB_ENV"
+          mkdir out
+          cp android/app/build/outputs/apk/release/app-release.apk "out/sms-cleaner-$VERSION$SUFFIX.apk"
+          cp android/app/build/outputs/mapping/release/mapping.txt "out/sms-cleaner-$VERSION-mapping.txt"
 
-      # R8 renames the app's classes: the mapping turns a crash's stack trace back into real names (retrace).
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android
+          path: out/
+          retention-days: 1
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # for ghcr.io
+    steps:
+      - uses: actions/checkout@v7
+
+      # Go cross-compiles in the build stage; QEMU only runs the final stage's apk add for the arm images.
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Tags and labels
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=${{ env.VERSION }}
+            type=raw,value=latest
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          build-args: VERSION=${{ env.VERSION }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  release:
+    needs: [android, docker]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # For compose.yml and .env.example.
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: android
+          path: out/
+
+      # A release asset can't start with a dot, so .env.example ships as env.example.
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
-          SUFFIX: ${{ steps.key.outputs.suffix }}
+          SUFFIX: ${{ needs.android.outputs.suffix }}
+          IMAGE: ghcr.io/${{ github.repository }}
         run: |
-          notes="Built from $GITHUB_SHA. Install the APK on the phone; it updates the app in place and keeps its data."
+          cp compose.yml out/
+          cp .env.example out/env.example
+          notes="Built from $GITHUB_SHA.
+
+          **Android:** install the APK on the phone; it updates the app in place and keeps its data."
           if [ -n "$SUFFIX" ]; then
             notes="$notes Signed with a one-off debug key: uninstall another sms-cleaner build first."
           fi
-          notes="$notes The mapping file turns a crash's stack trace back into real class names."
-          gh release create "v$VERSION" "$APK" "$MAPPING" \
+          notes="$notes The mapping file turns a crash's stack trace back into real class names.
+
+          **Docker:** \`$IMAGE:$VERSION\` (also \`latest\`), for amd64, arm64 and armv7. To start, put compose.yml in a folder, save env.example there as .env and set a password, then \`mkdir -p data && docker compose up -d\`. To update, \`docker compose pull && docker compose up -d\`."
+          gh release create "v$VERSION" out/* \
             --target "$GITHUB_SHA" \
             --title "sms-cleaner $VERSION" \
             --notes "$notes"

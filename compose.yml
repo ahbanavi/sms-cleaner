@@ -1,16 +1,27 @@
+# sms-cleaner: https://github.com/ahbanavi/sms-cleaner
+#
+# Put this file in a folder with a .env next to it (copy env.example), then:
+#   mkdir -p data && docker compose up -d
+# and open http://<host>:8085. Update with: docker compose pull && docker compose up -d
+#
+# To build the image from a checkout instead of pulling it:
+#   docker compose -f compose.yml -f compose.build.yml up -d --build
 services:
   sms-cleaner:
-    build: .
-    image: sms-cleaner:local
+    image: ghcr.io/ahbanavi/sms-cleaner:${SMSC_VERSION:-latest}
     container_name: sms-cleaner
     restart: unless-stopped
+    # The owner of ./data on the host. Create the folder yourself before the first start:
+    # a folder Docker creates is owned by root and the cleaner can't write to it.
+    user: "${PUID:-1000}:${PGID:-1000}"
     environment:
-      TZ: Asia/Tehran
+      TZ: ${TZ:-Asia/Tehran}
       SMSC_UI_PASSWORD: ${SMSC_UI_PASSWORD:?set SMSC_UI_PASSWORD in .env}
+      SMSC_UI_USER: ${SMSC_UI_USER:-admin}
       SMSC_TELEGRAM_TOKEN: ${SMSC_TELEGRAM_TOKEN:-}
       SMSC_TELEGRAM_CHAT_ID: ${SMSC_TELEGRAM_CHAT_ID:-}
-      # SMSC_PROXY: socks5://host:port   # only if Google is unreachable directly
+      SMSC_PROXY: ${SMSC_PROXY:-}
     volumes:
       - ./data:/data
     ports:
-      - "8085:8080"
+      - "${SMSC_PORT:-8085}:8080"
