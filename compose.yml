@@ -1,0 +1,16 @@
+services:
+  sms-cleaner:
+    build: .
+    image: sms-cleaner:local
+    container_name: sms-cleaner
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Tehran
+      SMSC_UI_PASSWORD: ${SMSC_UI_PASSWORD:?set SMSC_UI_PASSWORD in .env}
+      SMSC_TELEGRAM_TOKEN: ${SMSC_TELEGRAM_TOKEN:-}
+      SMSC_TELEGRAM_CHAT_ID: ${SMSC_TELEGRAM_CHAT_ID:-}
+      # SMSC_PROXY: socks5://host:port   # only if Google is unreachable directly
+    volumes:
+      - ./data:/data
+    ports:
+      - "8085:8080"

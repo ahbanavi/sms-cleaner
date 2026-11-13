@@ -1,0 +1,12 @@
+# runtime data: SQLite DB, phone session, imported personal training data
+/data/
+*.db
+*.db-wal
+*.db-shm
+session.json
+# binaries
+/sms-cleaner
+/dist/
+
+# secrets
+.env

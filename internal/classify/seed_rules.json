@@ -1,0 +1,1080 @@
+[
+ {
+  "kind": "keyword",
+  "pattern": "کد تایید",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 21"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "code:",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 20"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "مرسوله",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 17"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد ورود",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 16"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "تراکنش",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 13"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد رهگیری",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 12"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "عضویت شما لغو گردید",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 11"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد تایید شما",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 11"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "مانده",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 11"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "تخلف سرعت میانگین",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 11"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد تحویل",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 10"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شماره سفارش",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 8"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "بیمه سلامت ایران",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 7"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد پیگیری",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 6"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شماره مرجع",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 6"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "پرداخت صورتحساب",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 6"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "از حساب شما",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 6"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "عضویت شما لغو شد",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 6"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "your security code is",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 5"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد احراز هویت",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 4"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "این کد محرمانه است",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 4"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "با تشکر از پرداخت شما",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 4"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "رمز یک بار مصرف",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "روبه پایان",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "اعتبار شما در بخش",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "رمز یکبار مصرف",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شناسه پرداخت",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "پیگیری وضعیت مرسوله",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شماره مرسوله",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شماره پیگیری بانکی",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "بسته با کد رهگیری",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "تراکنش با موفقیت انجام شد",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد اعتبارسنجی",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد فعال سازی",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "با موفقیت ثبت شد",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "ورود موفق",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "سامانه خدمات الکترونیک انتظامی",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "پیک از",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "حرکت کرد",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد فعالسازی شما",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شناسه قبض",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "استفاده از اعتبار",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد تاییدیه",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شناسه تراکنش",
+  "category": "archive",
+  "weight": 3.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد بازیابی رمز",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "تغییر وضعیت",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "با موفقیت تایید شد",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "تحویل داده شد",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "تحویل پست شد",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "به اتمام رسیده",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "اعتبار حساب",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "ارزش توافقی",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "پیگیری وضعیت ارسال",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "قطعی برق",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد فعال احراز هویت",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "رهگیری پستی",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "پرداخت الکترونیک سامان",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شماره ترمینال",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شناسه خرید",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "در وضعیت تکمیل شده",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "در وضعیت در حال انجام",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "سفارش شما با شناسه",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "اعتبار باشگاه مشتریان",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "پلیس راهور",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "درخواست شما واصل شده",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "مرسوله شما به شماره",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "با موفقیت پرداخت شد",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "مبلغ سفارش شما",
+  "category": "archive",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "رمز پویا",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "واریز سود",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "رفع اختلال",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "امکان رهگیری مرسوله",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "your twilio verification code is",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "is your facebook code",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد یکبار مصرف",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد ورود به پنل",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد اختصاصی شما برای ورود",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "جزئیات صورتحساب",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "بدهی پیشین",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "مهلت پرداخت",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "پرداخت بانکی شما لغو شد",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "واریز مستقیم",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "بازگشت وجه",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "گزارش اعتباری",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "احراز هویت مبتنی بر چهره",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد دسترسی",
+  "category": "archive",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "تسلیت",
+  "category": "keep",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کدوم سمتین",
+  "category": "keep",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "نیم ساعت دیگه",
+  "category": "keep",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "به روی چشم",
+  "category": "keep",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "بد نیستم ممنون",
+  "category": "keep",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "زنگ بزنی",
+  "category": "keep",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "ایشالا",
+  "category": "keep",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد تخفیف",
+  "category": "offer",
+  "weight": 3.0,
+  "note": "real-data support 17"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "فقط تا",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 12"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "تخفیف ویژه",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 12"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "ارسال رایگان",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 10"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "تا 50% تخفیف",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 10"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "جشنواره",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 8"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کف خرید",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 8"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "ثبت سفارش",
+  "category": "offer",
+  "weight": 1.0,
+  "note": "real-data support 6"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "حداقل خرید",
+  "category": "offer",
+  "weight": 1.0,
+  "note": "real-data support 6"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "خرید حضوری",
+  "category": "offer",
+  "weight": 1.0,
+  "note": "real-data support 6"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "میلیون تخفیف",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 5"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "خرید قسطی",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 4"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "اولین خرید",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 4"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "جایزه بگیر",
+  "category": "offer",
+  "weight": 1.0,
+  "note": "real-data support 4"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "فرصت خرید حضوری",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 4"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "فرمول یک",
+  "category": "offer",
+  "weight": 1.0,
+  "note": "real-data support 4"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "خرید 4قسطه",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 4"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شارژ کیف پول",
+  "category": "offer",
+  "weight": 1.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "اعتبار تارا",
+  "category": "offer",
+  "weight": 1.5,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "امکان پرداخت اعتباری",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 3"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "بعدا پرداخت کن",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "هدیه بگیر",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "پیشنهادات ویژه",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "جایزه قطعی",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "فرصت رو از دست نده",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "هدیه گرفتی",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "خرید پرتخفیف",
+  "category": "offer",
+  "weight": 1.0,
+  "note": "real-data support 2"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "یک ماه مکالمه",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "مهلت استفاده",
+  "category": "offer",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "سود موثر",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "سبدت رو فراموش کردی",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "حراج",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شانس برنده شدن",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "پیشنهاد اختصاصی",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "پیشنهاد ویژه",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "اقساطی خرید کن",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "اقساطی بخر",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "فروش ویژه",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "روز جهانی",
+  "category": "offer",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "دریافت وام فوری",
+  "category": "offer",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "وام خرید کالا",
+  "category": "offer",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "رومینگ اربعین",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "ویژه کاربران 5g",
+  "category": "offer",
+  "weight": 2.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "فرهیخته گرامی",
+  "category": "spam",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کد دانشنامه",
+  "category": "spam",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کارت خدمات رفاهی",
+  "category": "spam",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "جوایز خوش حسابی",
+  "category": "spam",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "بخشودگی جریمه",
+  "category": "spam",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "عوارض نوسازی",
+  "category": "spam",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "خودروی برقی",
+  "category": "spam",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "هدیه نقدی انی",
+  "category": "spam",
+  "weight": 1.0,
+  "note": "real-data support 1"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "لغو11",
+  "category": "offer",
+  "weight": 1.5,
+  "note": "legal opt-out line; also on some service notices"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "قرعه کشی",
+  "category": "offer",
+  "weight": 1.0,
+  "note": ""
+ },
+ {
+  "kind": "keyword",
+  "pattern": "ابلاغیه الکترونیک",
+  "category": "spam",
+  "weight": 1.5,
+  "note": "builtin phishing lure"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "جهت مشاهده ابلاغیه",
+  "category": "spam",
+  "weight": 1.5,
+  "note": "builtin phishing lure"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "سهام عدالت",
+  "category": "spam",
+  "weight": 1.5,
+  "note": "builtin phishing lure"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "یارانه معیشتی",
+  "category": "spam",
+  "weight": 1.5,
+  "note": "builtin phishing lure"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "وام بدون ضامن",
+  "category": "spam",
+  "weight": 1.5,
+  "note": "builtin"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "شرط بندی",
+  "category": "spam",
+  "weight": 1.5,
+  "note": "builtin"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "کازینو",
+  "category": "spam",
+  "weight": 1.5,
+  "note": "builtin"
+ },
+ {
+  "kind": "keyword",
+  "pattern": "برنده خوش شانس",
+  "category": "spam",
+  "weight": 1.5,
+  "note": "builtin"
+ }
+]

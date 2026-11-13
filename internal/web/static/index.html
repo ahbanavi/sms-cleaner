@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SMS Cleaner</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232b3fb8'/%3E%3Crect y='26' width='8' height='6' fill='%23b0243c'/%3E%3Crect x='8' y='26' width='8' height='6' fill='%23c98a00'/%3E%3Crect x='16' y='26' width='8' height='6' fill='%2312807f'/%3E%3Crect x='24' y='26' width='8' height='6' fill='%235f7d2c'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>SMS Cleaner</div>
+    <div class="status-line" id="statusLine"></div>
+    <div class="spacer"></div>
+    <div class="mode" role="group" aria-label="What scheduled runs do">
+      <button type="button" id="modeDry" aria-pressed="true" title="Runs only show what they would do">Dry run</button>
+      <button type="button" id="modeLive" class="live" aria-pressed="false" title="Runs change your phone">Live</button>
+    </div>
+    <button class="btn" id="runPreview" type="button">Preview run</button>
+    <button class="btn primary" id="runNow" type="button">Clean now</button>
+  </header>
+  <div id="banners"></div>
+
+  <div class="app" id="app">
+    <nav class="rail" aria-label="Views">
+      <h2>Messages</h2>
+      <button class="tray cat-unknown" data-view="review"><span class="dot"></span>Needs review<span class="count" data-count="review"></span></button>
+      <button class="tray cat-spam" data-view="spam"><span class="dot"></span>Spam<span class="count" data-count="spam"></span></button>
+      <button class="tray cat-offer" data-view="offers"><span class="dot"></span>Offers<span class="count" data-count="offer"></span></button>
+      <button class="tray cat-archive" data-view="archive"><span class="dot"></span>Archive<span class="count" data-count="archive"></span></button>
+      <button class="tray cat-keep" data-view="keep"><span class="dot"></span>Keep<span class="count" data-count="keep"></span></button>
+      <button class="tray" data-view="all"><span class="dot"></span>Everything<span class="count" data-count="messages"></span></button>
+      <h2>Classifier</h2>
+      <button class="tray" data-view="rules"><span class="dot" style="--c: var(--blue)"></span>Rules<span class="count" data-count="rules"></span></button>
+      <button class="tray" data-view="test"><span class="dot" style="--c: var(--blue)"></span>Try a message</button>
+      <button class="tray" data-view="model"><span class="dot" style="--c: var(--blue)"></span>What it learned</button>
+      <h2>System</h2>
+      <button class="tray" data-view="activity"><span class="dot" style="--c: var(--ink-2)"></span>Activity</button>
+      <button class="tray" data-view="phone"><span class="dot" style="--c: var(--ink-2)"></span>Phone &amp; settings</button>
+    </nav>
+    <main class="main" id="main" tabindex="-1"></main>
+    <aside class="teach idle" id="teach" aria-label="Selected message"></aside>
+  </div>
+  <div id="toast" class="toast" hidden role="status"></div>
+  <div id="modal"></div>
+  <script src="app.js"></script>
+</body>
+</html>
