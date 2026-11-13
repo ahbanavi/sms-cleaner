@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SMS cleaner</string>
+    <string name="starting">Starting the cleaner…</string>
+    <string name="start_failed">The cleaner did not start.</string>
+    <string name="channel_name">Cleaner running</string>
+    <string name="notif_idle">Ready. Closes when you leave the app.</string>
+    <string name="notif_busy">Working on your messages…</string>
+    <string name="stop">Stop</string>
+</resources>
