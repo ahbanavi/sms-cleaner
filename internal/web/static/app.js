@@ -75,6 +75,58 @@ function confirmBox(title, html, okLabel, danger) {
   });
 }
 
+// ---------- phone layout ----------
+const MQ = window.matchMedia('(max-width: 720px)');
+const isMobile = () => MQ.matches;
+// The lists the Messages tab swipes between, in order: [view, tab name, category, status count key].
+const MSG_TABS = [['spam', 'Spam', 'spam', 'spam'], ['offers', 'Offers', 'offer', 'offer'], ['archive', 'Archive', 'archive', 'archive'], ['keep', 'Keep', 'keep', 'keep'], ['all', 'All', '', 'messages']];
+const SUBPAGES = { phone: 1, cleaning: 1, rules: 1, test: 1, model: 1 };
+const tabOf = (v) => (['home', 'review', 'activity'].includes(v) ? v : MSG_TABS.some((t) => t[0] === v) ? 'messages' : 'settings');
+const svg = (d, size = 22) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICON = {
+  back: svg('<path d="M15 18l-6-6 6-6"/>'),
+  up: svg('<path d="M18 15l-6-6-6 6"/>', 20),
+  down: svg('<path d="M6 9l6 6 6-6"/>', 20),
+  chev: svg('<path d="M9 6l6 6-6 6"/>', 18),
+  copy: svg('<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/>', 16),
+};
+const backHTML = () => (isMobile() && SUBPAGES[S.view] ? `<button class="m-back" onclick="go('settings')">${ICON.back}Settings</button>` : '');
+const defaultView = () => (isMobile() ? 'home' : 'review');
+
+// Horizontal swipes on touch screens. Areas that scroll sideways opt out with .no-swipe.
+function onSwipe(el, cb) {
+  let x0 = null, y0 = 0, t0 = 0;
+  el.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1 || e.target.closest('.no-swipe, input, textarea, select')) { x0 = null; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    if (x0 === null) return;
+    const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+    x0 = null;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > 2 * Math.abs(dy) && Date.now() - t0 < 700 && !String(window.getSelection?.() || '')) cb(dx < 0 ? 1 : -1);
+  }, { passive: true });
+}
+function animate(el, dir) {
+  if (!el || !dir) return;
+  el.classList.remove('swipe-next', 'swipe-prev');
+  void el.offsetWidth;
+  el.classList.add(dir > 0 ? 'swipe-next' : 'swipe-prev');
+}
+function copyCode(code) {
+  const done = () => toast(`Copied ${code}`);
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(code).then(done, () => fallbackCopy(code, done));
+  else fallbackCopy(code, done);
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch (e) { toast(`Code: ${text}`); }
+  ta.remove();
+}
+const fmtInterval = (min) => (min % 1440 === 0 ? `${min / 1440} day${min === 1440 ? '' : 's'}` : min % 60 === 0 ? `${min / 60} h` : `${min} min`);
+
 // ---------- state ----------
 const S = { view: 'review', status: null, list: [], total: 0, filter: {}, selected: null, detail: null, wasRunning: false };
 
@@ -133,6 +185,7 @@ async function refreshStatus() {
     if (['review', 'spam', 'offers', 'archive', 'keep', 'all', 'activity'].includes(S.view)) render();
   }
   S.wasRunning = st.running;
+  if (S.view === 'home' && isMobile() && !S.selected) renderHome();
   clearTimeout(S.statusTimer);
   S.statusTimer = setTimeout(refreshStatus, st.running ? 2000 : 15000);
 }
@@ -169,8 +222,12 @@ $('#runNow').onclick = async () => {
 // ---------- routing ----------
 function go(view) { location.hash = '#/' + view; }
 window.go = go;
-window.addEventListener('hashchange', () => { S.view = location.hash.replace('#/', '') || 'review'; S.selected = null; render(); });
+window.addEventListener('hashchange', () => { S.view = location.hash.replace('#/', '') || defaultView(); S.selected = null; render(); });
 $$('.tray').forEach((b) => (b.onclick = () => go(b.dataset.view)));
+$$('#bottomNav [data-tab]').forEach((b) => (b.onclick = () => go(b.dataset.tab === 'messages' ? (S.lastMsgTab || 'offers') : b.dataset.tab)));
+// Android's back button closes an open message before it leaves the list.
+window.addEventListener('popstate', () => { if (S.selected && isMobile() && !history.state?.smscMsg) closeTeach(); });
+MQ.addEventListener?.('change', () => render());
 
 const LIST_VIEWS = {
   review: { title: 'Needs review', cat: 'unknown', sub: 'The classifier wasn\'t sure about these, so it left them in your inbox. Label a few and it learns from them.', kbd: true, label: 'none', onPhone: 'yes' },
@@ -182,19 +239,30 @@ const LIST_VIEWS = {
 };
 
 function render() {
+  const mobile = isMobile();
+  document.body.classList.toggle('mobile', mobile);
+  // Home, Settings and Cleaning are phone pages; the desktop has the header and Phone & settings instead.
+  if (!mobile && ['home', 'settings', 'cleaning'].includes(S.view)) return go(S.view === 'home' ? 'review' : 'phone');
   $$('.tray').forEach((b) => { if (b.dataset.view === S.view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  const tab = tabOf(S.view);
+  $$('#bottomNav [data-tab]').forEach((b) => { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  if (MSG_TABS.some((t) => t[0] === S.view)) S.lastMsgTab = S.view;
   const listView = LIST_VIEWS[S.view];
   $('#app').classList.toggle('wide', !listView);
+  $('#main').onclick = null;
   closeTeach();
+  if (mobile) window.scrollTo(0, 0);
   if (listView) return renderList(listView);
-  ({ rules: renderRules, test: renderTest, model: renderModel, activity: renderActivity, phone: renderPhone }[S.view] || (() => go('review')))();
+  ({ home: renderHome, settings: renderSettings, cleaning: renderCleaning, rules: renderRules, test: renderTest, model: renderModel, activity: renderActivity, phone: renderPhone }[S.view] || (() => go(defaultView())))();
 }
 
 // ---------- message lists ----------
 async function renderList(v) {
   const f = (S.filter[S.view] ||= { q: '', onPhone: v.onPhone || '', label: v.label || '', sender: '', from: '', to: '' });
   const main = $('#main');
-  main.innerHTML = `
+  const mobile = isMobile();
+  if (mobile) main.innerHTML = mobileListHTML(v, f);
+  else main.innerHTML = `
     <div class="view-head"><h1>${esc(v.title)}</h1><span class="muted num" id="total"></span></div>
     <p class="view-sub">${esc(v.sub)}${v.kbd ? '<span class="kbd-hint"> Keys: ↑ ↓ to move, S O A K to label.</span>' : ''}</p>
     <div class="filters">
@@ -213,18 +281,56 @@ async function renderList(v) {
   $('#q').oninput = (e) => { clearTimeout(t); t = setTimeout(() => { f.q = e.target.value; loadList(v, true); }, 250); };
   $$('[data-onphone]').forEach((b) => (b.onclick = () => { f.onPhone = b.dataset.onphone; renderList(v); }));
   $$('[data-label]').forEach((b) => (b.onclick = () => { f.label = b.dataset.label; renderList(v); }));
+  if (mobile) {
+    const chip = (el, on) => el?.closest('.fchip')?.classList.toggle('on', !!on);
+    $('#onPhoneSel')?.addEventListener('change', (e) => { f.onPhone = e.target.value; chip(e.target, f.onPhone); loadList(v, true); });
+    $('#labelSel')?.addEventListener('change', (e) => { f.label = e.target.value; chip(e.target, f.label); loadList(v, true); });
+    $('#dateChip')?.addEventListener('click', () => { const r = $('#dateRow'); r.hidden = !r.hidden; });
+    $$('.mtab').forEach((b) => (b.onclick = () => go(b.dataset.view)));
+    $('.mtab[aria-selected="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
+    animate(main, S.swipeDir);
+    S.swipeDir = 0;
+  }
   if (v.offers) {
     api('senders?category=offer').then((list) => {
       const sel = $('#sender');
       if (!sel) return;
       sel.innerHTML += list.map((s) => `<option value="${esc(s.sender)}" ${s.sender === f.sender ? 'selected' : ''}>${esc(s.name && s.name !== s.sender ? `${s.name} (${s.sender})` : s.sender)} (${s.count})</option>`).join('');
     });
-    $('#sender').onchange = (e) => { f.sender = e.target.value; loadList(v, true); };
-    $('#from').onchange = (e) => { f.from = e.target.value; loadList(v, true); };
-    $('#to').onchange = (e) => { f.to = e.target.value; loadList(v, true); };
+    const dates = () => { const b = $('#dateChip'); if (b) { b.textContent = f.from || f.to ? 'Dates set' : 'Any date'; b.closest('.fchip').classList.toggle('on', !!(f.from || f.to)); } };
+    $('#sender').onchange = (e) => { f.sender = e.target.value; e.target.closest('.fchip')?.classList.toggle('on', !!f.sender); loadList(v, true); };
+    $('#from').onchange = (e) => { f.from = e.target.value; dates(); loadList(v, true); };
+    $('#to').onchange = (e) => { f.to = e.target.value; dates(); loadList(v, true); };
   }
   $('#more').onclick = () => loadList(v, false);
   loadList(v, true);
+}
+
+function mobileListHTML(v, f) {
+  const st = S.status?.stats || {};
+  const by = st.by_category || {};
+  const counts = { spam: by.spam, offer: by.offer, archive: by.archive, keep: by.keep, messages: st.messages };
+  const inTabs = MSG_TABS.some((t) => t[0] === S.view);
+  const head = inTabs ? '<div class="view-head"><h1>Messages</h1></div>'
+    : `<div class="view-head"><h1>${esc(v.title)}</h1><span class="muted num" id="total"></span></div>
+      <p class="view-sub">${S.view === 'review' ? 'The cleaner wasn\'t sure, so these stay on your phone. Each answer teaches it.' : esc(v.sub)}</p>`;
+  const tabs = inTabs ? `<div class="mtabs no-swipe" role="tablist" aria-label="Lists">${MSG_TABS.map(([view, name, cat, key]) => `<button type="button" class="mtab ${cat ? 'cat-' + cat : ''}" role="tab" data-view="${view}" aria-selected="${view === S.view}">${name} <span class="num">${counts[key] || ''}</span></button>`).join('')}</div>` : '';
+  const sel = (id, label, opts, cur) => `<label class="fchip ${cur ? 'on' : ''}"><select id="${id}" aria-label="${label}">${opts.map(([k, n]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`;
+  const chips = [
+    v.offers ? `<label class="fchip ${f.sender ? 'on' : ''}"><select id="sender" aria-label="Sender"><option value="">All senders</option></select></label>` : '',
+    v.offers ? `<span class="fchip plain ${f.from || f.to ? 'on' : ''}"><button type="button" id="dateChip">${f.from || f.to ? 'Dates set' : 'Any date'}</button></span>` : '',
+    S.view !== 'review' ? sel('onPhoneSel', 'Where', [['', 'On phone or removed'], ['yes', 'On phone'], ['no', 'Removed from phone']], f.onPhone) : '',
+    S.view !== 'review' ? sel('labelSel', 'Labels', [['', 'Labeled or guessed'], ['any', 'Labeled by you'], ['none', 'Guessed']], f.label) : '',
+  ].join('');
+  return `${head}${tabs}
+    <div class="m-filters">
+      <input class="input search" type="search" id="q" placeholder="Search text or sender" value="${esc(f.q)}" aria-label="Search">
+      ${chips ? `<div class="fchips no-swipe">${chips}</div>` : ''}
+      ${v.offers ? `<div class="date-row" id="dateRow" ${f.from || f.to ? '' : 'hidden'}><label class="date-field">From <input class="input" type="date" id="from" value="${esc(f.from)}"></label><label class="date-field">To <input class="input" type="date" id="to" value="${esc(f.to)}"></label></div>` : ''}
+    </div>
+    ${inTabs ? '<p class="m-count" id="total"></p>' : ''}
+    <div class="slips" id="slips" role="listbox" aria-label="Messages"></div>
+    <button class="btn more" id="more" hidden>Show more</button>`;
 }
 
 function listQuery(v, offset) {
@@ -248,7 +354,8 @@ async function loadList(v, reset) {
   S.total = res.total;
   const box = $('#slips');
   if (!box) return;
-  $('#total').textContent = res.total ? `${res.total} message${res.total === 1 ? '' : 's'}` : '';
+  const inTabs = isMobile() && MSG_TABS.some((t) => t[0] === S.view);
+  $('#total').textContent = res.total ? `${res.total} message${res.total === 1 ? '' : 's'}${inTabs ? '. Swipe left or right for the other lists.' : ''}` : '';
   if (!S.list.length) {
     box.innerHTML = `<div class="empty">${S.view === 'review'
       ? (S.status?.stats?.messages ? 'Nothing to review. Everything has been sorted.' : 'No messages yet. Pair your phone and run a preview to fill this in.')
@@ -256,20 +363,45 @@ async function loadList(v, reset) {
   } else box.innerHTML = S.list.map((m) => slipHTML(m, v.offers)).join('');
   $('#more').hidden = S.list.length >= S.total;
   box.onclick = (e) => {
-    const code = e.target.closest('mark.code');
-    if (code) { navigator.clipboard?.writeText(code.dataset.code); toast(`Copied ${code.dataset.code}`); e.stopPropagation(); return; }
+    const code = e.target.closest('mark.code, .code-btn');
+    if (code) { copyCode(code.dataset.code); e.stopPropagation(); return; }
+    const quick = e.target.closest('[data-quick]');
+    if (quick) {
+      const s = quick.closest('.slip');
+      s.style.setProperty('--leave', quick.dataset.quick === 'spam' || quick.dataset.quick === 'offer' ? '-40px' : '40px');
+      s.classList.add('leaving');
+      setTimeout(() => setLabel(s.dataset.id, quick.dataset.quick), 160);
+      return;
+    }
     const s = e.target.closest('.slip');
     if (s) select(s.dataset.id);
   };
+  box.onkeydown = (e) => { if (e.key === 'Enter' && e.target.classList.contains('m-slip')) select(e.target.dataset.id); };
 }
 
 function slipHTML(m, offers) {
+  if (isMobile()) return mobileSlipHTML(m, offers);
   const cat = m.label || m.category || 'unknown';
   const state = !m.on_phone ? '<span class="state deleted">removed from phone</span>' : m.action === 'archived' ? '<span class="state">archived</span>' : '';
   return `<button class="slip cat-${esc(cat)} ${m.on_phone ? '' : 'gone'}" role="option" data-id="${esc(m.id)}" aria-selected="${S.selected === m.id}">
     <div class="slip-meta"><span class="slip-sender">${esc(m.sender_name && m.sender_name !== m.sender ? m.sender_name : m.sender)}</span>
       <span title="${esc(jalali(m.ts))}">${esc(fmtTime(m.ts))}</span>${tag(cat)}${m.label ? '<span class="state">labeled by you</span>' : m.confidence ? `<span class="state num">${Math.round(m.confidence * 100)}%</span>` : ''}${state}</div>
     <div class="slip-body ${offers ? 'full' : ''}" dir="auto">${bodyHTML(m.body, offers)}</div></button>`;
+}
+
+// On the phone a slip is an article (it holds buttons): codes get Copy buttons, Needs review gets the four labels.
+function mobileSlipHTML(m, offers) {
+  const cat = m.label || m.category || 'unknown';
+  const review = S.view === 'review';
+  const state = !m.on_phone ? '<span class="state deleted">removed from phone</span>' : m.action === 'archived' ? '<span class="state">archived</span>' : '';
+  const codes = offers ? [...new Set(String(m.body || '').match(CODE_RE) || [])] : [];
+  return `<article class="slip m-slip cat-${esc(cat)} ${m.on_phone ? '' : 'gone'}" role="option" tabindex="0" data-id="${esc(m.id)}" aria-selected="${S.selected === m.id}">
+    <div class="slip-meta"><span class="slip-sender">${esc(m.sender_name && m.sender_name !== m.sender ? m.sender_name : m.sender)}</span>
+      <span title="${esc(jalali(m.ts))}">${esc(fmtTime(m.ts))}</span>${review ? '' : tag(cat)}${m.label ? '<span class="state">labeled by you</span>' : ''}${state}</div>
+    <div class="slip-body ${offers ? 'full' : ''}" dir="auto">${esc(m.body)}</div>
+    ${codes.length ? `<div class="m-codes">${codes.map((c) => `<button type="button" class="code-btn" data-code="${esc(c)}">${ICON.copy}Copy ${esc(c)}</button>`).join('')}</div>` : ''}
+    ${review ? `<div class="labels quick">${LABELS.map((c) => `<button type="button" class="label-btn cat-${c}" data-quick="${c}">${catName(c)}</button>`).join('')}</div>` : ''}
+  </article>`;
 }
 
 function updateSlip(m) {
@@ -293,6 +425,7 @@ function closeTeach() {
 }
 
 async function select(id) {
+  if (isMobile() && !S.selected && !history.state?.smscMsg) history.pushState({ smscMsg: true }, '');
   S.selected = id;
   $$('.slip').forEach((s) => s.setAttribute('aria-selected', s.dataset.id === id));
   $(`.slip[data-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'nearest' });
@@ -300,14 +433,14 @@ async function select(id) {
   if (S.selected === id) renderTeach();
 }
 
-function verdictHTML(now) {
+function verdictHTML(now, noHead) {
   const cat = now.category;
   const scores = now.scores || {};
   const maxS = Math.max(3, ...Object.values(scores));
   const bars = LABELS.map((c) => `<span class="cat-${c}">${catName(c)}</span><span class="bar cat-${c}"><i style="width:${Math.min(100, ((scores[c] || 0) / maxS) * 100)}%"></i></span><span class="num muted">${(scores[c] || 0).toFixed(1)}</span>`).join('');
   const reasons = (now.reasons || []).slice(0, 8).map((r) => `<li class="cat-${esc(r.category)}"><span class="tag cat-${esc(r.category)} ${r.category === 'offer' ? 'offer' : ''}">${esc(catName(r.category))}</span><span dir="auto">${esc(r.detail)}</span><span class="w">+${r.weight}</span></li>`).join('');
-  return `<div class="verdict cat-${esc(cat)}"><span class="big">${esc(catName(cat))}</span>
-    <span class="muted small">${cat === 'unknown' ? 'not sure enough to act' : `would be ${esc(CATS[cat].does)}`}</span></div>
+  return `${noHead ? '' : `<div class="verdict cat-${esc(cat)}"><span class="big">${esc(catName(cat))}</span>
+    <span class="muted small">${cat === 'unknown' ? 'not sure enough to act' : `would be ${esc(CATS[cat].does)}`}</span></div>`}
     <div class="bars">${bars}</div>${reasons ? `<ul class="reasons">${reasons}</ul>` : '<p class="hint">No rule matched and the learned model had no strong opinion.</p>'}`;
 }
 
@@ -324,7 +457,37 @@ function renderTeach() {
   t.className = 'teach';
   const defCat = m.label || (d.now.category !== 'unknown' ? d.now.category : '');
   const catOptions = (sel) => LABELS.map((c) => `<option value="${c}" ${c === sel ? 'selected' : ''}>${catName(c)}</option>`).join('');
-  t.innerHTML = `
+  const mobile = isMobile();
+  const name = m.sender_name && m.sender_name !== m.sender ? m.sender_name : m.sender;
+  const pos = S.list.findIndex((x) => x.id === m.id);
+  const vcat = m.label || d.now.category;
+  const consequence = (vcat === 'unknown' ? 'Not sure enough to act, so it stays on your phone until you decide.'
+    : `${CATS[vcat].does[0].toUpperCase()}${CATS[vcat].does.slice(1)}.`) + (!m.on_phone ? ' Removed from the phone; this copy stays here.' : '');
+  const labelBtns = LABELS.map((c) => `<button class="label-btn cat-${c}" data-setlabel="${c}" aria-pressed="${m.label === c}">${catName(c)}${mobile ? '' : `<kbd>${CATS[c].key.toUpperCase()}</kbd>`}</button>`).join('');
+  if (mobile) {
+    t.innerHTML = `<div class="m-bar">
+        <button class="icon-btn" id="closeTeach" aria-label="Back">${ICON.back}</button>
+        <div class="m-title"><b>${esc(name)}</b><span>${name !== m.sender ? `<span dir="ltr">${esc(m.sender)}</span>, ` : ''}${esc(d.sender_kind)} sender, ${esc(fmtTime(m.ts))}</span></div>
+        ${pos >= 0 ? `<button class="icon-btn" id="prevMsg" aria-label="Previous message" ${pos <= 0 ? 'disabled' : ''}>${ICON.up}</button>
+        <span class="num small muted" style="white-space:nowrap">${pos + 1} of ${S.total || S.list.length}</span>
+        <button class="icon-btn" id="nextMsg" aria-label="Next message" ${pos >= S.list.length - 1 ? 'disabled' : ''}>${ICON.down}</button>` : ''}
+      </div>
+      <div class="m-verdict cat-${esc(vcat)}"><b>${esc(catName(vcat))}</b><span>${esc(consequence)}</span></div>
+      <div class="body" id="teachBody" dir="auto">${bodyHTML(m.body, true)}</div>
+      <div class="teach-form" id="selForm" hidden><span class="small">Selected text:</span><select class="input" id="selCat">${catOptions(defCat || 'offer')}</select><button class="btn" id="selAdd">Add as keyword</button></div>
+      <p class="hint">Select part of the text to turn it into a keyword.</p>
+      <h3>Why</h3>
+      ${verdictHTML(d.now, true)}
+      <h3>Teach with words</h3>
+      ${chipsHTML(d.terms)}
+      <div class="teach-form"><span class="small">Chosen words mean</span><select class="input" id="chipCat">${catOptions(defCat || 'offer')}</select><button class="btn primary" id="chipAdd" disabled>Add keywords</button></div>
+      <h3>Sender</h3>
+      <div class="teach-form"><span class="small">Always treat <b dir="ltr">${esc(m.sender)}</b> as</span><select class="input" id="sndCat">${catOptions(defCat || 'archive')}</select><button class="btn" id="sndAdd">Save</button></div>
+      <h3>Same conversation</h3>
+      <button class="btn" id="convBtn">Show other messages</button><div id="conv"></div>
+      ${pos >= 0 && S.list.length > 1 ? '<p class="m-swipe-hint">Swipe left or right for the next message.</p>' : ''}
+      <div class="m-labels"><span>This message is</span><div class="labels">${labelBtns}</div></div>`;
+  } else t.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:start;gap:8px">
       <div><div class="slip-sender" style="font-size:16px">${esc(m.sender_name && m.sender_name !== m.sender ? m.sender_name : m.sender)}</div>
       <div class="muted small"><span dir="ltr">${esc(m.sender)}</span>, ${esc(d.sender_kind)} sender, <span title="${esc(jalali(m.ts))}">${esc(fmtTime(m.ts))}</span>
@@ -337,7 +500,7 @@ function renderTeach() {
     <p class="hint">Select part of the text to turn it into a keyword.</p>
 
     <h3>This message is</h3>
-    <div class="labels">${LABELS.map((c) => `<button class="label-btn cat-${c}" data-setlabel="${c}" aria-pressed="${m.label === c}">${catName(c)}<kbd>${CATS[c].key.toUpperCase()}</kbd></button>`).join('')}</div>
+    <div class="labels">${labelBtns}</div>
     <p class="hint">${m.label ? `You labeled this ${esc(catName(m.label))}. Tap it again to remove the label.` : 'Your label overrides the guess and trains the learned model.'}</p>
 
     <h3>Current verdict</h3>
@@ -355,7 +518,14 @@ function renderTeach() {
     <h3>Same conversation</h3>
     <button class="btn" id="convBtn">Show other messages</button><div id="conv"></div>`;
 
-  $('#closeTeach').onclick = closeTeach;
+  $('#closeTeach').onclick = () => (isMobile() && history.state?.smscMsg ? history.back() : closeTeach());
+  if (mobile) {
+    $('#prevMsg') && ($('#prevMsg').onclick = () => step(-1));
+    $('#nextMsg') && ($('#nextMsg').onclick = () => step(1));
+    t.scrollTop = 0;
+    animate(t, S.stepDir);
+    S.stepDir = 0;
+  }
   $$('[data-setlabel]', t).forEach((b) => (b.onclick = () => setLabel(m.id, m.label === b.dataset.setlabel ? '' : b.dataset.setlabel)));
   $$('.chip', t).forEach((c) => (c.onclick = () => {
     c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') !== 'true');
@@ -388,19 +558,31 @@ function renderTeach() {
   };
 }
 
+function step(dir) {
+  const i = S.list.findIndex((x) => x.id === S.selected);
+  const n = i >= 0 && S.list[i + dir];
+  if (!n) return;
+  S.stepDir = dir;
+  select(n.id);
+}
+
 async function setLabel(id, label) {
   let res;
   try { res = await api(`messages/${encodeURIComponent(id)}/label`, { body: { label } }); } catch (e) { toast(e.message); return; }
   toast(label ? `Labeled ${catName(label)}. Model retrained.` : 'Label removed');
   const m = res.message;
   if (S.view === 'review' && label) {
+    const fromDetail = S.selected === id;
     const i = S.list.findIndex((x) => x.id === id);
     S.list.splice(i, 1);
     $(`.slip[data-id="${CSS.escape(id)}"]`)?.remove();
     S.total--;
     $('#total').textContent = S.total ? `${S.total} messages` : '';
+    const empty = () => { if (!S.list.length) $('#slips').innerHTML = '<div class="empty">Nothing to review. Everything has been sorted.</div>'; };
+    if (isMobile() && !fromDetail) { empty(); refreshStatus(); return; }
     const next = S.list[Math.min(i, S.list.length - 1)];
-    if (next) select(next.id); else { closeTeach(); if (!S.list.length) $('#slips').innerHTML = '<div class="empty">Nothing to review. Everything has been sorted.</div>'; }
+    if (next) select(next.id);
+    else { if (isMobile() && history.state?.smscMsg) history.back(); else closeTeach(); empty(); }
   } else {
     updateSlip(m);
     if (S.selected === id) { S.detail = { ...S.detail, ...res }; renderTeach(); }
@@ -441,7 +623,7 @@ document.addEventListener('keydown', (e) => {
 async function renderRules() {
   const main = $('#main');
   const f = (S.filter.rules ||= { cat: '', q: '' });
-  main.innerHTML = `<div class="view-head"><h1>Rules</h1><span class="muted" id="rcount"></span></div>
+  main.innerHTML = `${backHTML()}<div class="view-head"><h1>Rules</h1><span class="muted" id="rcount"></span></div>
     <p class="view-sub">Rules add points to a category when they match. A message is decided when one category reaches 2 points and leads by 1; spam needs 3. Sender rules override everything.</p>
     <div class="panel"><h2>Add a rule</h2>
       <div class="filters">
@@ -500,7 +682,7 @@ function drawRules() {
 
 // ---------- try a message ----------
 function renderTest() {
-  $('#main').innerHTML = `<div class="view-head"><h1>Try a message</h1></div>
+  $('#main').innerHTML = `${backHTML()}<div class="view-head"><h1>Try a message</h1></div>
     <p class="view-sub">Paste any SMS to see what the cleaner would do with it and why. Nothing is saved.</p>
     <div class="panel"><div class="field"><label for="ts">Sender</label><input class="input" id="ts" placeholder="30001234 or Mellat or 0912…" dir="ltr"></div>
     <div class="field"><label for="tb">Text</label><textarea class="input" id="tb" rows="6" dir="auto" placeholder="متن پیامک"></textarea></div>
@@ -518,10 +700,10 @@ function renderTest() {
 // ---------- model ----------
 async function renderModel() {
   const main = $('#main');
-  main.innerHTML = '<div class="view-head"><h1>What it learned</h1></div><p class="muted">Loading…</p>';
+  main.innerHTML = `${backHTML()}<div class="view-head"><h1>What it learned</h1></div><p class="muted">Loading…</p>`;
   const m = await api('model');
   const cls = m.classes || {};
-  main.innerHTML = `<div class="view-head"><h1>What it learned</h1></div>
+  main.innerHTML = `${backHTML()}<div class="view-head"><h1>What it learned</h1></div>
     <p class="view-sub">Besides your rules, a learned model reads every labeled message: ${m.examples} so far. These are the words it relies on most. Tap one to add it as a rule.</p>
     <div class="panel"><div class="stats">${LABELS.map((c) => `<div class="stat cat-${c}"><b style="color:var(--c)">${cls[c] || 0}</b><span>${catName(c)} examples</span></div>`).join('')}</div></div>
     <div class="grid2">${LABELS.map((c) => `<div class="panel"><h2 class="cat-${c}" style="color:var(--c)">${catName(c)}</h2>
@@ -550,6 +732,18 @@ async function renderModel() {
 async function renderActivity() {
   const main = $('#main');
   const runs = await api('runs');
+  if (isMobile()) {
+    main.innerHTML = `<div class="view-head"><h1>History</h1></div>
+      <p class="view-sub">Every run and every change it made, or would have made in a preview.</p>
+      <div class="m-group">${runs.map((r) => {
+        const s = r.stats || {};
+        const sum = r.error ? `<span class="err">${esc(r.error)}</span>` : `${s.plan_block || 0} spam, ${(s.plan_delete || 0) + (s.action_delete_message || 0)} offers, ${s.plan_archive || 0} archived`;
+        return `<button class="m-row" data-run="${r.id}"><span class="m-row-t"><span><b>${r.dry ? 'Preview' : 'Clean'}</b> ${esc(fmtTime(r.started_at))}</span><small>${sum}</small></span>${ICON.chev}</button>`;
+      }).join('') || '<p class="m-about muted">No runs yet.</p>'}</div>
+      <div id="acts"></div>`;
+    main.querySelector('.m-group').onclick = (e) => { const b = e.target.closest('[data-run]'); if (b) showActions(b.dataset.run, true); };
+    return;
+  }
   main.innerHTML = `<div class="view-head"><h1>Activity</h1></div>
     <p class="view-sub">Every run and every change it made, or would have made in a preview.</p>
     <div class="panel" style="padding:4px 8px;overflow-x:auto"><table><thead><tr><th>When</th><th>Kind</th><th>Scanned</th><th>Spam</th><th>Offers</th><th>Archive</th><th>Left alone</th><th>Skipped</th><th></th></tr></thead>
@@ -563,17 +757,137 @@ async function renderActivity() {
   main.querySelector('tbody').onclick = (e) => { const tr = e.target.closest('tr[data-run]'); if (tr) showActions(tr.dataset.run); };
   if (runs[0]) showActions(runs[0].id);
 }
-async function showActions(runId) {
+async function showActions(runId, scroll) {
   const acts = await api('actions?run=' + runId);
   const names = { block_report: 'Block + report', delete_conversation: 'Delete chat', delete_message: 'Delete message', archive: 'Archive' };
+  const result = (a) => (a.ok ? (a.dry ? '<span class="muted">would do</span>' : '<span class="ok">done</span>') : `<span class="err">${esc(a.error)}</span>`);
+  if (isMobile()) {
+    $('#acts').innerHTML = `<h2 class="m-h2">Run ${esc(runId)}</h2><div class="m-acts">${acts.map((a) => `<div class="m-act"><div class="top-line"><span class="who">${esc(a.sender)}</span>${tag(a.category)}<span>${esc(names[a.action] || a.action)}</span><span style="margin-inline-start:auto">${result(a)}</span></div>${a.detail ? `<span class="small muted" dir="auto">${esc(a.detail)}</span>` : ''}</div>`).join('') || '<p class="muted">Nothing to do in this run.</p>'}</div>`;
+    if (scroll) $('#acts').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
   $('#acts').innerHTML = `<div class="panel" style="padding:4px 8px;overflow-x:auto"><h2 style="padding:10px 8px 0">Run ${esc(runId)}</h2><table><thead><tr><th>Sender</th><th>Category</th><th>Action</th><th>Details</th><th>Result</th></tr></thead><tbody>
     ${acts.map((a) => `<tr><td dir="ltr" style="text-align:start">${esc(a.sender)}</td><td>${tag(a.category)}</td><td>${esc(names[a.action] || a.action)}</td><td dir="auto" class="small">${esc(a.detail)}</td>
       <td>${a.ok ? (a.dry ? '<span class="muted">would do</span>' : '<span class="ok">done</span>') : `<span class="err">${esc(a.error)}</span>`}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Nothing to do in this run.</td></tr>'}</tbody></table></div>`;
 }
 
+// ---------- phone pages: home, settings, cleaning ----------
+function connState(st) {
+  if (st.demo) return ['Demo', 'unknown'];
+  if (!st.paired) return ['Not paired', 'spam'];
+  if (st.phone?.connected) return ['Connected', 'archive'];
+  if (st.phone?.error) return ['Offline', 'spam'];
+  return ['Connecting', 'unknown'];
+}
+
+async function renderHome() {
+  const st = S.status || {};
+  const s = st.stats || {};
+  const by = s.by_category || {};
+  const lr = st.last_run;
+  const ls = lr?.stats || {};
+  const spam = ls.plan_block || 0, offers = (ls.plan_delete || 0) + (ls.action_delete_message || 0), arch = ls.plan_archive || 0;
+  const [connText, connCat] = connState(st);
+  let run;
+  if (st.running) run = `<span class="muted small">Working on your messages</span><b class="m-big progress">${esc(st.progress || 'Running')}</b>`;
+  else if (!lr) run = '<b class="m-big">No runs yet</b><span class="muted small">Preview first to see what would change. Nothing on the phone changes.</span>';
+  else if (lr.error) run = `<span class="muted small">${lr.dry ? 'Last preview' : 'Last clean'}, ${esc(fmtTime(lr.started_at))}</span><b class="m-big">It failed</b><p class="err" style="margin:0">${esc(lr.error)}</p>`;
+  else run = `<span class="muted small">${lr.dry ? 'Last preview' : 'Last clean'}, ${esc(fmtTime(lr.started_at))}</span>
+    <b class="m-big">${lr.dry ? `${spam + offers + arch} changes planned` : `${spam + offers + arch} messages sorted`}</b>
+    <div class="m-stats">
+      <div class="cat-spam"><b>${spam}</b><span>spam ${lr.dry ? 'to block' : 'blocked'}</span></div>
+      <div class="cat-offer"><b>${offers}</b><span>offers ${lr.dry ? 'to remove' : 'removed'}</span></div>
+      <div class="cat-archive"><b>${arch}</b><span>${lr.dry ? 'to archive' : 'archived'}</span></div>
+    </div>`;
+  const off = st.running || !st.paired;
+  const tiles = [['spam', 'Spam', by.spam, 'spam'], ['offers', 'Offers', by.offer, 'offer'], ['archive', 'Archive', by.archive, 'archive'], ['keep', 'Keep', by.keep, 'keep']];
+  $('#main').innerHTML = `
+    <header class="m-home-head"><div class="brand"><span class="brand-mark" aria-hidden="true"></span>SMS Cleaner</div>
+      <button class="conn cat-${connCat}" data-go="phone"><i></i>${connText}</button></header>
+    <section class="m-card">${run}
+      <button class="btn primary m-cta" id="hClean" ${off ? 'disabled' : ''}>Clean now</button>
+      <button class="btn ghost m-cta2" id="hPreview" ${off ? 'disabled' : ''}>Preview first, nothing changes</button></section>
+    ${s.review ? `<section class="m-card m-need" style="margin-top:14px"><div><b>${s.review} message${s.review === 1 ? ' needs' : 's need'} you</b><span id="needPeek" dir="auto"></span></div>
+      <button class="btn primary" data-go="review">Review</button></section>` : ''}
+    <h2 class="m-h2">Kept in the app</h2>
+    <div class="m-tiles">${tiles.map(([v, n, c, cat]) => `<button class="slip m-tile cat-${cat}" data-go="${v}"><span>${n}</span><b class="num">${c || 0}</b></button>`).join('')}</div>
+    <div class="m-group" style="margin-top:14px"><button class="m-row" data-go="cleaning"><span class="m-row-t">Automatic cleaning</span><span class="val">${st.next_run ? 'On' : 'Off'}</span>${ICON.chev}</button></div>`;
+  $('#hClean').onclick = () => $('#runNow').click();
+  $('#hPreview').onclick = () => $('#runPreview').click();
+  $('#main').onclick = (e) => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go); };
+  if (s.review) {
+    try {
+      const r = await api('messages?category=unknown&label=none&on_phone=yes&limit=1');
+      const peek = $('#needPeek');
+      if (peek) peek.textContent = r.items[0]?.body || '';
+    } catch (e) { /* the count alone is enough */ }
+  }
+}
+
+async function renderSettings() {
+  const st = S.status || {};
+  let settings;
+  try { settings = await api('settings'); } catch (e) { toast(e.message); return; }
+  const iv = parseInt(settings.interval_min, 10) || 0;
+  const ph = st.phone || {};
+  const row = (to, title, sub, val) => `<button class="m-row" data-go="${to}"><span class="m-row-t"><span>${title}</span>${sub ? `<small>${sub}</small>` : ''}</span>${val !== undefined ? `<span class="val">${val}</span>` : ''}${ICON.chev}</button>`;
+  const phone = st.demo ? row('phone', 'Demo mode', 'Sample messages, no phone connected')
+    : !st.paired ? row('phone', 'Not paired', 'Pair to start cleaning')
+    : ph.connected ? row('phone', 'Connected', `${ph.google_account ? 'Through your Google account, ' : ''}since ${esc(fmtTime(ph.since))}`)
+    : ph.error ? row('phone', 'Can\'t reach your phone', esc(ph.error)) : row('phone', 'Paired', 'Connecting to your phone');
+  $('#main').innerHTML = `<div class="view-head"><h1>Settings</h1></div>
+    <h2 class="m-h2">Phone</h2><div class="m-group">${phone}</div>
+    <h2 class="m-h2">Cleaning</h2><div class="m-group">
+      ${row('cleaning', 'Automatic cleaning', '', iv > 0 ? `every ${fmtInterval(iv)}` : 'Off')}
+      ${row('cleaning', 'Automatic runs', st.mode === 'live' ? 'Change the phone' : 'Preview only, nothing on the phone changes')}
+      ${row('cleaning', 'Most changes per clean', '', esc(settings.max_actions))}
+      ${row('cleaning', 'How sure it must be', `${esc(settings.min_score)} points to decide, ${esc(settings.spam_min_score)} to call it spam`)}</div>
+    <h2 class="m-h2">Teaching</h2><div class="m-group">
+      ${row('rules', 'Keyword rules', '', st.stats?.rules || 0)}
+      ${row('test', 'Try a message')}
+      ${row('model', 'What it learned', '', `${st.model_examples || 0} labels`)}</div>
+    <h2 class="m-h2">App</h2><div class="m-group m-about">${aboutHTML(st.update)}</div>`;
+  $('#main').onclick = (e) => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go); };
+}
+
+async function renderCleaning() {
+  const st = S.status || {};
+  let settings;
+  try { settings = await api('settings'); } catch (e) { toast(e.message); return; }
+  const field = (k, label, hint, attrs = '') => `<div class="field"><label for="s_${k}">${label}</label><input class="input" id="s_${k}" data-k="${k}" value="${esc(settings[k])}" ${attrs}><span class="hint">${hint}</span></div>`;
+  $('#main').innerHTML = `${backHTML()}<div class="view-head"><h1>Cleaning</h1></div>
+    <div class="panel"><h2>Automatic runs</h2>
+      <div class="seg" role="group" aria-label="What automatic runs do"><button type="button" data-mode="dry" aria-pressed="${st.mode !== 'live'}">Preview only</button><button type="button" data-mode="live" aria-pressed="${st.mode === 'live'}">Change the phone</button></div>
+      <p class="hint">Clean now on Home always changes the phone, after asking first.</p></div>
+    <div class="panel"><h2>Schedule and limits</h2>
+      ${field('interval_min', 'Run every (minutes)', '0 turns automatic cleaning off. 720 is every 12 hours.', 'type="number" min="0" inputmode="numeric"')}
+      ${st.platform === 'android' ? '<p class="hint" style="margin:-4px 0 12px">Runs in the background even when the app is closed. Android checks about once an hour, so a clean can start up to an hour late. The phone needs to be online.</p>' : ''}
+      ${field('max_actions', 'Most phone changes per clean', 'A safety cap; anything over it waits for the next run.', 'type="number" min="0" inputmode="numeric"')}
+      ${field('min_score', 'Points needed to decide', 'Higher means more messages left for review.', 'type="number" min="0.5" step="0.5" inputmode="decimal"')}
+      ${field('spam_min_score', 'Points needed to call it spam', 'Spam gets blocked, so it needs more evidence.', 'type="number" min="0.5" step="0.5" inputmode="decimal"')}
+      ${field('max_convs', 'Inbox chats to scan', 'Newest first.', 'type="number" min="1" inputmode="numeric"')}
+      ${field('msgs_per_conv', 'Messages read per chat', 'Newest messages of each chat.', 'type="number" min="1" inputmode="numeric"')}
+      <button class="btn primary m-cta" id="saveSet">Save settings</button></div>`;
+  $$('[data-mode]').forEach((b) => (b.onclick = async () => {
+    await (b.dataset.mode === 'live' ? $('#modeLive').onclick() : $('#modeDry').onclick());
+    await refreshStatus();
+    renderCleaning();
+  }));
+  $('#saveSet').onclick = async () => {
+    const body = {};
+    $$('[data-k]').forEach((i) => (body[i.dataset.k] = i.value));
+    try { await api('settings', { method: 'PUT', body }); toast('Settings saved'); refreshStatus(); } catch (e) { toast(e.message); }
+  };
+}
+
 // ---------- phone & settings ----------
 async function renderPhone() {
   const main = $('#main');
+  if (isMobile()) {
+    main.innerHTML = `${backHTML()}<div class="view-head"><h1>Phone</h1></div><div class="panel"><div id="pairBox"></div></div>`;
+    drawPair(await api('pair'), S.status || {});
+    return;
+  }
   const [settings, pair] = await Promise.all([api('settings'), api('pair')]);
   const st = S.status || {};
   const field = (k, label, hint, attrs = '') => `<div class="field"><label for="s_${k}">${label}</label><input class="input" id="s_${k}" data-k="${k}" value="${esc(settings[k])}" ${attrs}><span class="hint">${hint}</span></div>`;
@@ -646,11 +960,13 @@ function drawPair(p, st) {
     return;
   }
   const method = S.pairMethod || 'google';
+  const android = st.platform === 'android';
   box.innerHTML = `${p.status === 'error' ? `<p class="err">${esc(p.error)}</p>` : ''}
     <div class="seg" role="group" aria-label="Pairing method" style="margin-bottom:12px">
       <button data-pm="google" aria-pressed="${method === 'google'}">Google account</button><button data-pm="qr" aria-pressed="${method === 'qr'}">QR code</button></div>
     ${method === 'google' ? `
       <p class="small">Use this when Device pairing on your phone offers your Google account instead of a QR scanner.</p>
+      ${android ? '<p class="small"><b>Do steps 1 to 3 on a computer.</b> Then send the copied text to this phone, for example to yourself in a messenger, and paste it below.</p>' : ''}
       <ol class="small">
         <li>In Edge press <b>Ctrl+Shift+N</b> for an InPrivate window and open <a href="https://messages.google.com/web" target="_blank" rel="noopener noreferrer">messages.google.com/web</a>. Sign in with the Google account your phone uses. Don't pair there.</li>
         <li>Press <b>F12</b>, open <b>Network</b>, clear the filter box, click the <b>Doc</b> filter, then press <b>Ctrl+Shift+R</b> to reload.</li>
@@ -660,6 +976,7 @@ function drawPair(p, st) {
       <textarea class="input" id="cookies" rows="5" style="width:100%;font-size:12px" dir="ltr" spellcheck="false" autocomplete="off" placeholder="curl 'https://messages.google.com/web/conversations' -b 'SID=…; HSID=…; …'"></textarea>
       <p class="hint">These cookies are a sign-in to your Google account. They are stored only in data/session.json on this server, because Google Messages needs them to stay connected. A Cookie header or a cookie-editor JSON export works too.</p>
       <button class="btn primary" id="pairGoogle">Pair with Google account</button>`
+    : android ? '<p class="small">The QR code has to be scanned by this phone, so it can\'t be shown on this phone. Use the Google account method, or pair from the computer version and move the pairing over.</p>'
     : `<p class="small">Pair once, the same way you would with Google Messages for web. The session is stored on this server only.</p>
       <button class="btn primary" id="pairGo">Show pairing code</button>`}`;
   $$('[data-pm]', box).forEach((b) => (b.onclick = () => { S.pairMethod = b.dataset.pm; drawPair({ ...p, status: 'idle' }, st); }));
@@ -672,7 +989,7 @@ function drawPair(p, st) {
       try { drawPair(await api('pair/google', { body: { cookies: raw } }), S.status || {}); }
       catch (e) { toast(e.message); drawPair({ ...p, status: 'error', error: e.message }, st); }
     };
-  } else {
+  } else if ($('#pairGo')) {
     $('#pairGo').onclick = async () => {
       $('#pairGo').disabled = true;
       try { drawPair(await api('pair/start', { body: {} }), S.status || {}); } catch (e) { toast(e.message); $('#pairGo').disabled = false; }
@@ -681,5 +998,12 @@ function drawPair(p, st) {
 }
 
 // ---------- boot ----------
-S.view = location.hash.replace('#/', '') || 'review';
+S.view = location.hash.replace('#/', '') || defaultView();
+onSwipe($('#main'), (dir) => {
+  if (!isMobile() || S.selected) return;
+  const i = MSG_TABS.findIndex((t) => t[0] === S.view);
+  const n = i >= 0 && MSG_TABS[i + dir];
+  if (n) { S.swipeDir = dir; go(n[0]); }
+});
+onSwipe($('#teach'), (dir) => { if (isMobile() && S.selected) step(dir); });
 refreshStatus().then(render);

@@ -2,16 +2,20 @@
 package web
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"crypto/subtle"
 	"embed"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
 	"io/fs"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -50,10 +54,16 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	sub, _ := fs.Sub(static, "static")
 	files := http.FileServerFS(sub)
+	index := versionedIndex(sub)
 	mux.Handle("GET /", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Embedded files carry no modification time; make browsers revalidate
 		// so a new binary's UI shows up without a hard refresh.
 		w.Header().Set("Cache-Control", "no-cache")
+		if index != nil && (r.URL.Path == "/" || r.URL.Path == "/index.html") {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = w.Write(index)
+			return
+		}
 		files.ServeHTTP(w, r)
 	}))
 
@@ -153,6 +163,7 @@ func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 		"mode": s.Engine.Setting(ctx, engine.SetMode), "next_run": nextTS, "last_run": last,
 		"stats": s.Store.Stats(ctx), "model_examples": b.Examples(), "model_classes": b.ClassCounts(),
 		"pair": s.Pairer.State(), "phone": s.Keeper.Status(), "update": s.updateStatus(),
+		"platform": runtime.GOOS,
 	})
 }
 
@@ -577,4 +588,23 @@ func (s *Server) archiveProbe(w http.ResponseWriter, r *http.Request) {
 		res["error"] = perr.Error()
 	}
 	writeJSON(w, 200, res)
+}
+
+// versionedIndex returns index.html with app.css and app.js addressed by a
+// hash of their content, so a WebView that caches hard (the Android app)
+// still loads the new UI after an update.
+func versionedIndex(fsys fs.FS) []byte {
+	page, err := fs.ReadFile(fsys, "index.html")
+	if err != nil {
+		return nil
+	}
+	h := sha256.New()
+	for _, name := range []string{"app.css", "app.js"} {
+		b, _ := fs.ReadFile(fsys, name)
+		h.Write(b)
+	}
+	v := hex.EncodeToString(h.Sum(nil))[:12]
+	page = bytes.Replace(page, []byte(`href="app.css"`), []byte(`href="app.css?v=`+v+`"`), 1)
+	page = bytes.Replace(page, []byte(`src="app.js"`), []byte(`src="app.js?v=`+v+`"`), 1)
+	return page
 }

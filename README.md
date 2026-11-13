@@ -103,10 +103,16 @@ Files put in `data/import/` (`*.jsonl` training, `*.json` rules) are imported on
 
 ### On the phone itself (Android app)
 
-`android/` wraps the same server in an app, so no PC or server is needed. The app starts the cleaner
-on the phone, shows the same UI, and stops it about a minute after you leave the app (a clean in
-progress finishes first). Every three days it connects once in the background, because Google signs
-out Messages for web sessions that stay unused for about two weeks.
+`android/` wraps the same server in an app, so no PC or server is needed. On a phone-sized screen the
+UI switches to a phone layout: a bottom bar (Home, Review, Messages, History, Settings), one big
+**Clean now** on Home, label buttons right on the review cards, lists you swipe between, and messages
+that open full screen with the label buttons pinned at the bottom.
+
+The app starts the cleaner while you use it and stops it about a minute after you leave (a clean in
+progress finishes first). **Automatic cleaning** (Settings › Cleaning) also works with the app closed:
+Android checks about once an hour and the cleaner runs when the interval is due, following the
+Preview only / Change the phone setting, then posts a summary notification. Every three days it also
+connects once, because Google signs out Messages for web sessions that stay unused for about two weeks.
 
 **Install:** download `sms-cleaner-<version>.apk` from the
 [latest release](../../releases/latest) on the phone and open it (allow installs from your browser
@@ -145,6 +151,7 @@ data includes your messages and Google cookies.
 sms-cleaner serve            web UI + scheduler (default)
 sms-cleaner pair [-google]   pair by QR, or -google: cookies on stdin + emoji
 sms-cleaner ping             connect once to keep an idle pairing alive
+sms-cleaner tick             clean now if the schedule says one is due
 sms-cleaner run [-live]      one pass; dry unless -live
 sms-cleaner import FILE...   training .jsonl or rules .json
 sms-cleaner eval [-v]        cross-validate; -v prints harmful mistakes
