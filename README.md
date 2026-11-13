@@ -141,8 +141,9 @@ sms-cleaner export-rules     dump rules as JSON
 - **The protocol is unofficial.** Google can change it; libgm (mautrix) usually catches up within days.
   Update with `go get go.mau.fi/mautrix-gmessages@latest` and rebuild.
 - **Deleted is deleted on the phone.** The SQLite copy is the only one, so back up `data/`.
-- **Archiving uses a request shape no other client has published yet.** If the first live archive
-  fails, the error shows in Activity.
+- **Archiving uses a request libgm doesn't name** (conversation action 4, captured from the
+  messages.google.com web client). A status update to "archived" is acknowledged by the phone
+  but does nothing. `sms-cleaner probe-archive CONVERSATION_ID` checks it against your phone.
 
 ## License
 

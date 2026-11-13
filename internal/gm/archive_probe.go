@@ -8,42 +8,44 @@ import (
 	"google.golang.org/protobuf/encoding/prototext"
 )
 
-// ArchiveVariants are the ways the protocol might express "archive". The
-// phone accepted the plain status update without archiving anything, so
-// ProbeArchive tries the others on a real conversation.
-var ArchiveVariants = []string{"status", "keep", "action3", "action3-status", "action4-status"}
+// ArchiveVariants are archive request shapes ProbeArchive can send.
+// "action4" is what the web client sends and what Archive uses; "status" and
+// "keep" are acknowledged by the phone but do nothing.
+var ArchiveVariants = []string{"action4", "status", "keep"}
 
-func archiveRequest(variant, convID string) (*gmproto.UpdateConversationRequest, error) {
-	status := func(s gmproto.ConversationStatus) *gmproto.UpdateConversationRequest_UpdateData {
-		return &gmproto.UpdateConversationRequest_UpdateData{UpdateData: &gmproto.UpdateConversationData{
+func probeRequest(variant, convID, phone string) (*gmproto.UpdateConversationRequest, error) {
+	status := func(s gmproto.ConversationStatus) *gmproto.UpdateConversationRequest {
+		return &gmproto.UpdateConversationRequest{
 			ConversationID: convID,
-			Data:           &gmproto.UpdateConversationData_Status{Status: s},
-		}}
+			Data: &gmproto.UpdateConversationRequest_UpdateData{UpdateData: &gmproto.UpdateConversationData{
+				ConversationID: convID,
+				Data:           &gmproto.UpdateConversationData_Status{Status: s},
+			}},
+		}
 	}
-	req := &gmproto.UpdateConversationRequest{ConversationID: convID}
 	switch variant {
+	case "action4":
+		return archiveRequest(actionArchive, convID, phone), nil
 	case "status":
-		req.Data = status(gmproto.ConversationStatus_ARCHIVED)
+		return status(gmproto.ConversationStatus_ARCHIVED), nil
 	case "keep":
-		req.Data = status(gmproto.ConversationStatus_KEEP_ARCHIVED)
-	case "action3":
-		req.Action = gmproto.ConversationActionStatus(3)
-	case "action3-status":
-		req.Action = gmproto.ConversationActionStatus(3)
-		req.Data = status(gmproto.ConversationStatus_ARCHIVED)
-	case "action4-status":
-		req.Action = gmproto.ConversationActionStatus(4)
-		req.Data = status(gmproto.ConversationStatus_ARCHIVED)
-	default:
-		return nil, fmt.Errorf("unknown variant %q", variant)
+		return status(gmproto.ConversationStatus_KEEP_ARCHIVED), nil
 	}
-	return req, nil
+	return nil, fmt.Errorf("unknown variant %q", variant)
 }
 
 // ProbeArchive sends one archive variant for convID and returns the raw
 // response.
 func (c *Client) ProbeArchive(ctx context.Context, variant, convID string) (string, error) {
-	req, err := archiveRequest(variant, convID)
+	phone := ""
+	if convs, err := c.Conversations(ctx, FolderInbox, 500); err == nil {
+		for _, cv := range convs {
+			if cv.ID == convID {
+				phone = cv.Phone()
+			}
+		}
+	}
+	req, err := probeRequest(variant, convID, phone)
 	if err != nil {
 		return "", err
 	}

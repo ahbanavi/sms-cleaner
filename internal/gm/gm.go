@@ -424,15 +424,18 @@ func (c *Client) Contacts(ctx context.Context) ([]Contact, error) {
 	return out, nil
 }
 
-// Archive moves a conversation to the Archived folder.
+// Conversation actions missing from libgm's enum, captured from what the
+// messages.google.com web client sends.
+const (
+	actionUnarchive = gmproto.ConversationActionStatus(3)
+	actionArchive   = gmproto.ConversationActionStatus(4)
+)
+
+// Archive moves a conversation to the Archived folder. The web client sends
+// action 4 with the same data as a delete; an UpdateData status of ARCHIVED
+// is acknowledged by the phone but changes nothing.
 func (c *Client) Archive(ctx context.Context, conv Conversation) error {
-	resp, err := c.cli.UpdateConversation(ctx, &gmproto.UpdateConversationRequest{
-		ConversationID: conv.ID,
-		Data: &gmproto.UpdateConversationRequest_UpdateData{UpdateData: &gmproto.UpdateConversationData{
-			ConversationID: conv.ID,
-			Data:           &gmproto.UpdateConversationData_Status{Status: gmproto.ConversationStatus_ARCHIVED},
-		}},
-	})
+	resp, err := c.cli.UpdateConversation(ctx, archiveRequest(actionArchive, conv.ID, conv.Phone()))
 	if err != nil {
 		return err
 	}
@@ -440,6 +443,17 @@ func (c *Client) Archive(ctx context.Context, conv Conversation) error {
 		return errors.New("phone refused archive")
 	}
 	return nil
+}
+
+func archiveRequest(action gmproto.ConversationActionStatus, convID, phone string) *gmproto.UpdateConversationRequest {
+	return &gmproto.UpdateConversationRequest{
+		Action:         action,
+		ConversationID: convID,
+		Data: &gmproto.UpdateConversationRequest_DeleteData{DeleteData: &gmproto.DeleteConversationData{
+			ConversationID: convID,
+			Phone:          ptrNonZero(phone),
+		}},
+	}
 }
 
 // BlockAndReport blocks the sender and reports the conversation as spam.
