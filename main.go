@@ -71,6 +71,7 @@ Usage: sms-cleaner <command> [flags]
   serve            web UI + scheduler (default)
   pair [-google]   pair with your phone: QR code, or -google (cookies on stdin + emoji)
   ping             connect to the phone once and disconnect (keeps the session alive)
+  tick             run a scheduled clean if one is due (for the Android app's background job)
   run [-live]      one cleaning pass (dry unless -live)
   import FILE...   import training (.jsonl: {"sender","body","label"}) or rules (.json array)
   eval             cross-validate the classifier on labeled data
@@ -102,7 +103,7 @@ func main() {
 	defer stop()
 
 	switch cmd {
-	case "serve", "pair", "ping", "probe-archive", "run", "import", "eval", "export-rules":
+	case "serve", "pair", "ping", "probe-archive", "tick", "run", "import", "eval", "export-rules":
 	case "help", "-h", "--help":
 		usage()
 		return
@@ -180,6 +181,22 @@ func main() {
 		if err != nil {
 			log.Fatal().Err(err).Msg("run failed")
 		}
+	case "tick":
+		// The Android app calls this from a background job while its server
+		// is not running: clean only when the schedule says one is due.
+		if !cfg.demo {
+			eng.Paired = func() bool { _, err := gm.LoadSession(sessionPath); return err == nil }
+		}
+		out := map[string]any{"due": false}
+		if next := eng.NextRun(ctx); !next.IsZero() && !time.Now().Before(next) {
+			dry := eng.Setting(ctx, engine.SetMode) != "live"
+			rep, err := eng.Run(ctx, dry, "schedule")
+			out = map[string]any{"due": true, "dry": dry, "stats": rep.Stats}
+			if err != nil {
+				out["error"] = err.Error()
+			}
+		}
+		printJSON(out)
 	case "import":
 		for _, f := range args {
 			msg, err := importPath(ctx, st, f)

@@ -126,6 +126,34 @@ object GoServer {
         }
     }
 
+    /**
+     * Runs a scheduled clean if one is due (the `tick` command) and returns its
+     * JSON report, or null when the app's own server is running (it schedules
+     * cleans itself) or the run did not finish in time.
+     */
+    fun tick(ctx: Context): String? {
+        if (!sessionLock.tryLock(5, TimeUnit.MINUTES)) return null
+        try {
+            if (running) return null
+            val pb = command(ctx, "tick").apply {
+                redirectErrorStream(false)
+                redirectOutput(ProcessBuilder.Redirect.PIPE)
+                redirectError(ProcessBuilder.Redirect.appendTo(logFile(ctx)))
+            }
+            val p = pb.start()
+            var out = ""
+            val reader = Thread { out = p.inputStream.bufferedReader().readText() }.apply { start() }
+            if (!p.waitFor(9, TimeUnit.MINUTES)) {
+                p.destroyForcibly()
+                return null
+            }
+            reader.join(2000)
+            return out
+        } finally {
+            sessionLock.unlock()
+        }
+    }
+
     fun lastLog(ctx: Context, lines: Int = 15): String =
         runCatching { logFile(ctx).readLines().takeLast(lines).joinToString("\n") }.getOrDefault("")
 
