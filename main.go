@@ -68,6 +68,7 @@ Usage: sms-cleaner <command> [flags]
 
   serve            web UI + scheduler (default)
   pair [-google]   pair with your phone: QR code, or -google (cookies on stdin + emoji)
+  ping             connect to the phone once and disconnect (keeps the session alive)
   run [-live]      one cleaning pass (dry unless -live)
   import FILE...   import training (.jsonl: {"sender","body","label"}) or rules (.json array)
   eval             cross-validate the classifier on labeled data
@@ -95,7 +96,7 @@ func main() {
 	defer stop()
 
 	switch cmd {
-	case "serve", "pair", "run", "import", "eval", "export-rules":
+	case "serve", "pair", "ping", "run", "import", "eval", "export-rules":
 	case "help", "-h", "--help":
 		usage()
 		return
@@ -106,10 +107,15 @@ func main() {
 	if err := os.MkdirAll(cfg.dataDir, 0o700); err != nil {
 		log.Fatal().Err(err).Msg("data dir")
 	}
+	setupDNS(log)
 	sessionPath := filepath.Join(cfg.dataDir, "session.json")
 	settings, err := gm.HTTPSettings(cfg.proxy)
 	if err != nil {
 		log.Fatal().Err(err).Msg("proxy")
+	}
+
+	if cmd == "ping" {
+		os.Exit(cmdPing(ctx, sessionPath, settings, log))
 	}
 
 	if cmd == "pair" {
@@ -205,6 +211,27 @@ func main() {
 			log.Fatal().Err(err).Msg("http")
 		}
 	}
+}
+
+// cmdPing connects once so Google sees the session in use (Messages for web
+// signs out sessions idle for about two weeks) and refreshed tokens and
+// cookies get saved, then disconnects.
+func cmdPing(ctx context.Context, sessionPath string, settings exhttp.ClientSettings, log zerolog.Logger) int {
+	cctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+	cli, err := gm.Connect(cctx, sessionPath, settings, log)
+	if err != nil {
+		log.Error().Err(err).Msg("could not reach the phone")
+		return 1
+	}
+	// Give token-refresh events a moment to arrive and be saved.
+	select {
+	case <-time.After(5 * time.Second):
+	case <-ctx.Done():
+	}
+	cli.Close()
+	log.Info().Msg("phone session is alive")
+	return 0
 }
 
 func printJSON(v any) {
