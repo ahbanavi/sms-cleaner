@@ -100,7 +100,7 @@ func main() {
 	defer stop()
 
 	switch cmd {
-	case "serve", "pair", "ping", "run", "import", "eval", "export-rules":
+	case "serve", "pair", "ping", "probe-archive", "run", "import", "eval", "export-rules":
 	case "help", "-h", "--help":
 		usage()
 		return
@@ -120,6 +120,9 @@ func main() {
 
 	if cmd == "ping" {
 		os.Exit(cmdPing(ctx, sessionPath, settings, log))
+	}
+	if cmd == "probe-archive" {
+		os.Exit(cmdProbeArchive(ctx, sessionPath, settings, log, args))
 	}
 
 	if cmd == "pair" {
@@ -236,6 +239,48 @@ func cmdPing(ctx context.Context, sessionPath string, settings exhttp.ClientSett
 	cli.Close()
 	log.Info().Msg("phone session is alive")
 	return 0
+}
+
+// cmdProbeArchive tries archive request variants on one conversation until
+// the phone really moves it out of the inbox. Diagnostic: it changes the phone.
+func cmdProbeArchive(ctx context.Context, sessionPath string, settings exhttp.ClientSettings, log zerolog.Logger, args []string) int {
+	if len(args) < 1 {
+		fmt.Fprintln(os.Stderr, "usage: sms-cleaner probe-archive CONVERSATION_ID [VARIANT...]")
+		fmt.Fprintln(os.Stderr, "variants:", strings.Join(gm.ArchiveVariants, ", "))
+		return 2
+	}
+	convID, variants := args[0], args[1:]
+	if len(variants) == 0 {
+		variants = gm.ArchiveVariants
+	}
+	cctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	cli, err := gm.Connect(cctx, sessionPath, settings, log)
+	cancel()
+	if err != nil {
+		log.Error().Err(err).Msg("could not reach the phone")
+		return 1
+	}
+	defer cli.Close()
+	where := func() (string, bool) {
+		in, err1 := cli.ConversationStatus(ctx, gm.FolderInbox, convID)
+		ar, err2 := cli.ConversationStatus(ctx, gm.FolderArchive, convID)
+		ok := err1 == nil && err2 == nil
+		return fmt.Sprintf("inbox=%q archive=%q errs=%v,%v", in, ar, err1, err2), ok && in == ""
+	}
+	before, _ := where()
+	fmt.Println("before:", before)
+	for _, v := range variants {
+		resp, err := cli.ProbeArchive(ctx, v, convID)
+		fmt.Printf("variant %s: err=%v resp=%q\n", v, err, strings.TrimSpace(resp))
+		time.Sleep(10 * time.Second)
+		after, gone := where()
+		fmt.Println("  after:", after)
+		if err == nil && gone {
+			fmt.Println("WORKS:", v)
+			return 0
+		}
+	}
+	return 3
 }
 
 func printJSON(v any) {

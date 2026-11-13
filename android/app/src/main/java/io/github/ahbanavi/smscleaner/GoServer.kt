@@ -1,6 +1,7 @@
 package io.github.ahbanavi.smscleaner
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.net.ConnectivityManager
 import android.util.Base64
 import android.util.Log
@@ -77,6 +78,10 @@ object GoServer {
                 }
                 Log.i(TAG, "starting server on port $port")
                 process = pb.start()
+                // Debug builds leave the address for adb-driven testing (run-as only).
+                val debuggable = ctx.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+                val info = File(ctx.filesDir, "server.json")
+                if (debuggable) info.writeText("{\"port\":$port,\"user\":\"$USER\",\"password\":\"$password\"}") else info.delete()
             }
         }
         val deadline = System.currentTimeMillis() + timeoutMs

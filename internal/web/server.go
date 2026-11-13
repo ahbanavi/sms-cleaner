@@ -77,6 +77,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/pair/google", s.pairGoogle)
 	mux.HandleFunc("POST /api/pair/cancel", s.pairCancel)
 	mux.HandleFunc("POST /api/unpair", s.unpair)
+	mux.HandleFunc("POST /api/debug/archive-probe", s.archiveProbe)
 	mux.HandleFunc("POST /api/import", s.importFile)
 	root := http.NewServeMux()
 	root.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte("ok")) })
@@ -519,4 +520,51 @@ func (s *Server) importFile(w http.ResponseWriter, r *http.Request) {
 	}
 	s.afterRuleChange(r.Context())
 	writeJSON(w, 200, map[string]string{"result": msg})
+}
+
+// archiveProbe sends one archive request variant for a conversation and
+// reports where the phone lists it before and after. Diagnostic only: it
+// changes the phone.
+func (s *Server) archiveProbe(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		ConvID  string `json:"conv_id"`
+		Variant string `json:"variant"`
+	}
+	if err := readJSON(r, &req); err != nil || req.ConvID == "" {
+		writeErr(w, 400, errors.New("need conv_id and variant"))
+		return
+	}
+	be, err := s.Engine.Connect(r.Context())
+	if err != nil {
+		writeErr(w, 502, err)
+		return
+	}
+	defer be.Close()
+	p, ok := be.(interface {
+		ProbeArchive(ctx context.Context, variant, convID string) (string, error)
+		ConversationStatus(ctx context.Context, folder gm.Folder, convID string) (string, error)
+	})
+	if !ok {
+		writeErr(w, 400, errors.New("not connected to a real phone"))
+		return
+	}
+	where := func() map[string]string {
+		out := map[string]string{}
+		for _, f := range []gm.Folder{gm.FolderInbox, gm.FolderArchive} {
+			st, err := p.ConversationStatus(r.Context(), f, req.ConvID)
+			if err != nil {
+				st = "error: " + err.Error()
+			}
+			out[string(f)] = st
+		}
+		return out
+	}
+	before := where()
+	resp, perr := p.ProbeArchive(r.Context(), req.Variant, req.ConvID)
+	time.Sleep(10 * time.Second)
+	res := map[string]any{"before": before, "response": resp, "after": where()}
+	if perr != nil {
+		res["error"] = perr.Error()
+	}
+	writeJSON(w, 200, res)
 }
