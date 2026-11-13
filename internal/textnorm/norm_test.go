@@ -13,7 +13,7 @@ func TestText(t *testing.T) {
 			t.Errorf("Text(%q) = %q %U, want %q", in, got, []rune(got), want)
 		}
 	}
-	if got := Sender("+98 912 000 1111"); got != "09120001111" {
+	if got := Sender("+98 900 000 1111"); got != "09000001111" {
 		t.Errorf("Sender = %q", got)
 	}
 	if k := SenderKind("30001234"); k != KindAdLine {
