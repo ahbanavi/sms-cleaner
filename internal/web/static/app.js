@@ -793,7 +793,7 @@ async function renderHome() {
   else if (!lr) run = '<b class="m-big">No runs yet</b><span class="muted small">Preview first to see what would change. Nothing on the phone changes.</span>';
   else if (lr.error) run = `<span class="muted small">${lr.dry ? 'Last preview' : 'Last clean'}, ${esc(fmtTime(lr.started_at))}</span><b class="m-big">It failed</b><p class="err" style="margin:0">${esc(lr.error)}</p>`;
   else run = `<span class="muted small">${lr.dry ? 'Last preview' : 'Last clean'}, ${esc(fmtTime(lr.started_at))}</span>
-    <b class="m-big">${lr.dry ? `${spam + offers + arch} changes planned` : `${spam + offers + arch} messages sorted`}</b>
+    <b class="m-big">${spam + offers + arch} ${lr.dry ? `change${spam + offers + arch === 1 ? '' : 's'} planned` : `message${spam + offers + arch === 1 ? '' : 's'} sorted`}</b>
     <div class="m-stats">
       <div class="cat-spam"><b>${spam}</b><span>spam ${lr.dry ? 'to block' : 'blocked'}</span></div>
       <div class="cat-offer"><b>${offers}</b><span>offers ${lr.dry ? 'to remove' : 'removed'}</span></div>
