@@ -87,11 +87,32 @@ Then:
 
 Files put in `data/import/` (`*.jsonl` training, `*.json` rules) are imported on start and renamed `*.done`.
 
+### On the phone itself (Android app)
+
+`android/` wraps the same server in an app, so no PC or server is needed. The app starts the cleaner
+on the phone, shows the same UI, and stops it about a minute after you leave the app (a clean in
+progress finishes first). Every three days it connects once in the background, because Google signs
+out Messages for web sessions that stay unused for about two weeks.
+
+Build it (needs Go, JDK 17+ and the Android SDK; arm64 phones only):
+
+```bash
+cd android
+./gradlew assembleDebug                   # app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+Coming from the PC or Docker version? `android/move-data.sh` copies your labels, rules, saved offers
+and history into the app. Add `--session` to move the pairing too (stop the PC cleaner first; two
+cleaners can't share one pairing). The app turns off Android backup, since its data includes
+your messages and Google cookies.
+
 ### Commands
 
 ```
 sms-cleaner serve            web UI + scheduler (default)
 sms-cleaner pair [-google]   pair by QR, or -google: cookies on stdin + emoji
+sms-cleaner ping             connect once to keep an idle pairing alive
 sms-cleaner run [-live]      one pass; dry unless -live
 sms-cleaner import FILE...   training .jsonl or rules .json
 sms-cleaner eval [-v]        cross-validate; -v prints harmful mistakes
